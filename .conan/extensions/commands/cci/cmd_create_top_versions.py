@@ -22,9 +22,11 @@ def create_top_versions(conan_api, parser, *args):
     args = parser.parse_args(*args)
     result = []
 
+    out = ConanOutput()
+
     recipe_folder = os.path.join("recipes", args.name)
     if not os.path.isdir(recipe_folder):
-        ConanOutput.error("ABORTING -- Make sure to run from CCI root")
+        out.error("ABORTING -- Make sure to run from CCI root")
 
     latest_folder_version = {}
 
@@ -38,6 +40,6 @@ def create_top_versions(conan_api, parser, *args):
                     latest_folder_version[folder] = version
     for folder, version in latest_folder_version.items():
         conanfile = os.path.join(recipe_folder, folder, "conanfile.py")
-        conan_api.out.verbose(msg=f"Creating package for {args.name}/{version} from {folder}")
+        out.verbose(f"Creating package for {args.name}/{version} from {folder}")
 
     return result
