@@ -15,24 +15,24 @@ def output_json(exported):
 @conan_command(group="Conan Center Index", formatters={"json": output_json})
 def export_all_versions(conan_api, parser, *args):
     """
-    Exporting several recipes
+    Export all version for a recipe
     """
     parser.add_argument('name')
     args = parser.parse_args(*args)
     result = []
 
-    recipefolder = os.path.join("recipes", args.name)
-    if not os.path.isdir(recipefolder):
-      ConanOutput.error("ABORTING -- Make sure to run from CCI root")
+    recipe_folder = os.path.join("recipes", args.name)
+    if not os.path.isdir(recipe_folder):
+      conan_api.out.error("ABORTING -- Make sure to run from CCI root")
 
-    configfile = os.path.join(recipefolder, "config.yml")
-    if os.path.isfile(configfile):
-       with open(configfile, "r") as file:
+    config_file = os.path.join(recipe_folder, "config.yml")
+    if os.path.isfile(config_file):
+       with open(config_file, "r") as file:
           config = yaml.safe_load(file)
           for version in config["versions"]:
-            conanfile = os.path.join(recipefolder, config["versions"][version]["folder"], "conanfile.py")
+            conanfile = os.path.join(recipe_folder, config["versions"][version]["folder"], "conanfile.py")
             if os.path.isfile(conanfile):
-                ConanOutput.verbose("Exporting", args.name, version)
+                conan_api.out.verbose(f"Exporting {args.name}/{version}")
                 ref = conan_api.export.export(os.path.abspath(conanfile), args.name, version, None, None)
                 result.append(ref)
     return result
