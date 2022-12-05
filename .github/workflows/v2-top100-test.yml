@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    
+    - run: yq '(.versions| to_entries | .[]) as $item ireduce([]; . + $item.key)' recipes/aaf/config.yml
 
     - name: setup python
       uses: actions/setup-python@v4
