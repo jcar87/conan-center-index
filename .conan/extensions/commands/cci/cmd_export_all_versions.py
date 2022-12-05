@@ -23,7 +23,7 @@ def export_all_versions(conan_api, parser, *args):
 
     recipefolder = os.path.join("recipes", args.name)
     if not os.path.isdir(recipefolder):
-      print("ABORTING -- Make sure to run from CCI root")
+      ConanOutput.error("ABORTING -- Make sure to run from CCI root")
 
     configfile = os.path.join(recipefolder, "config.yml")
     if os.path.isfile(configfile):
@@ -32,7 +32,7 @@ def export_all_versions(conan_api, parser, *args):
           for version in config["versions"]:
             conanfile = os.path.join(recipefolder, config["versions"][version]["folder"], "conanfile.py")
             if os.path.isfile(conanfile):
-                print("Exporting", args.name, version)
+                ConanOutput.verbose("Exporting", args.name, version)
                 ref = conan_api.export.export(os.path.abspath(conanfile), args.name, version, None, None)
                 result.append(ref)
     return result
