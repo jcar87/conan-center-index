@@ -2,7 +2,7 @@ name: 2.0 Migration Effort Check
 
 on:
   push: {}
-  
+
 env:
   RECIPES: "recipes/zlib/all recipes/openssl/1.x.x recipes/openssl/3.x.x recipes/boost/all recipes/nlohmann_json/all recipes/bzip2/all recipes/fmt/all recipes/gtest/all recipes/eigen/all recipes/catch2/3.x.x recipes/libiconv/all recipes/rapidjson/all recipes/zstd/all recipes/sqlite3/all recipes/libbacktrace/all recipes/spdlog/all recipes/pkgconf/all recipes/b2/portable recipes/libjpeg/all recipes/xz_utils/all recipes/expat/all recipes/m4/all recipes/libpng/all recipes/libwebp/all recipes/opengl/all recipes/cli11/all recipes/libcurl/all recipes/autoconf/all recipes/protobuf/all recipes/automake/all recipes/c-ares/all recipes/jbig/all recipes/libuuid/all recipes/xorg/all recipes/libtool/all recipes/ninja/all recipes/ms-gsl/all recipes/libpq/all recipes/cpp-httplib/all recipes/libxml2/all recipes/pybind11/all recipes/brotli/all recipes/abseil/all recipes/freetype/all recipes/libffi/all recipes/pcre/all recipes/libdeflate/all recipes/wayland/all recipes/grpc/all recipes/pcre2/all recipes/yaml-cpp/all recipes/asio/all recipes/wayland-protocols/all recipes/opus/all recipes/gnu-config/all recipes/libtiff/all recipes/re2/all recipes/meson/all recipes/poco/all recipes/xkbcommon/all recipes/ogg/all recipes/jasper/all recipes/jsoncpp/all recipes/glm/all recipes/libuv/all recipes/libsodium/all recipes/lz4/all recipes/range-v3/all recipes/vorbis/all recipes/flex/all recipes/benchmark/all recipes/fontconfig/meson recipes/openjpeg/all recipes/openexr/3.x recipes/aws-c-common/all recipes/md4c/all recipes/magic_enum/all recipes/cppcodec/all recipes/glfw/all recipes/openh264/all recipes/cyrus-sasl/all recipes/bison/all recipes/zulu-openjdk/all recipes/cmake/3.x.x recipes/glib/all recipes/libunwind/all recipes/libjpeg-turbo/all recipes/ghc-filesystem/all recipes/nanoflann/all recipes/glu/all recipes/stb/all recipes/nasm/all recipes/libmysqlclient/all recipes/cxxopts/all recipes/odbc/all recipes/libcap/all recipes/mbedtls/all recipes/cereal/all recipes/cryptopp/all recipes/civetweb/all recipes/sdl/all recipes/xtl/all recipes/xtensor/all recipes/minizip/all recipes/icu/all recipes/libalsa/all recipes/jwt-cpp/all"
 
@@ -11,35 +11,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    
-    - run: yq '(.versions| to_entries | .[]) as $item ireduce([]; . + $item.key)' recipes/aaf/config.yml
-
     - name: setup python
       uses: actions/setup-python@v4
       with:
         python-version: 3.8 # Should be 3.6 for 2.0 min (double check)
-
     - name: install cmake
-      uses: lukka/get-cmake@latest # Shuold be set to CMake 3.15 which is the min for 2.0
+      uses: lukka/get-cmake@latest # Should be set to CMake 3.15 which is the min for 2.0
 
     - run: python3 -m pip install conan==2.0.0b6
-    - run: conan config init --force
+    - run: |
+        conan config home
+        conan config install .conan
 
     - name: conan export
       run: |
-          echo '## Linter summary (recipes)' >> $GITHUB_STEP_SUMMARY
-          i=1
           for file in $RECIPES; do
-            echo "Running `conan export` - $file"
-            conan export $file
+            conan cci:export-all-versions $file
           done
 
     - run: |
-          echo '## Linter summary (recipes)' >> $GITHUB_STEP_SUMMARY
-          i=1
+          echo '## ConanCenterIndex 2.0 Migration Effort' >> $GITHUB_STEP_SUMMARY
           for file in $RECIPES; do
-            echo "Running `conan export` - $file"
-            pylint --rcfile=linter/pylintrc_testpackage $file --ignore-paths="recipes/[^/]*/[^/]*/test_v1[^/]*/conanfile.py --output-format=json --output=recipes.json --exit-zero
-            jq 'map( select(.type=="error")) | group_by (.message)[] | {message: .[0].message, length: length}' recipes.json > recipes2.json
+            conan cci:create-top-versions $file --format json > result.json
             jq -r '" * \(.message): \(.length)"' recipes2.json >> $GITHUB_STEP_SUMMARY
           done

@@ -3,7 +3,7 @@ import json
 import yaml
 
 # conan config install .conan
-# conan cci:create-top-version fmt
+# conan cci:create-top-versions fmt
 
 from conan.api.output import ConanOutput
 from conan.cli.command import conan_command
