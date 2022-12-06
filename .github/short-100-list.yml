@@ -1,13 +1,11 @@
 ---
 recipes:
-  - zlib
-  - nlohmann_json
+  - "zlib"
+  - "nlohmann_json"
   - bzip2
   - fmt
   - gtest
-  - catch2:
-     folders:
-     - "3.x.x"
+  - catch2
   - libiconv
   - rapidjson
   - zstd

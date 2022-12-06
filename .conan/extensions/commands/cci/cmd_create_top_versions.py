@@ -9,6 +9,7 @@ from conan.api.output import ConanOutput
 from conan.cli.args import add_profiles_args
 from conan.cli.command import conan_command, OnceArgument
 from conan.cli.printers.graph import print_graph_basic, print_graph_packages
+from conan.errors import ConanException
 
 
 # is this the correct API?
@@ -21,27 +22,24 @@ def output_json(exported):
 @conan_command(group="Conan Center Index", formatters={"json": output_json})
 def create_top_versions(conan_api, parser, *args):
     """
-    Export all version for a recipe
+    Build the "top" version from each recipe folder
     """
-    parser.add_argument('-n', '--name')
+    parser.add_argument('-n', '--name', action=OnceArgument, help="Name of the recipe to export")
     parser.add_argument('-l', '--list', action=OnceArgument, help="YAML file with list of recipes to export")
     add_profiles_args(parser)
     args = parser.parse_args(*args)
 
-    result = []
-
     out = ConanOutput()
-    out.writeln(args)
 
     recipes_to_create = []
-
     if args.list:
-        out.writeln(f"Parsing recipes from list {args.list}")
+        out.verbose(f"Parsing recipes from list {args.list}")
         with open(args.list, "r") as stream:
             try:
                 recipes_to_create = yaml.safe_load(stream)['recipes']
             except yaml.YAMLError as exc:
-                print(exc)
+                out.error(exc)
+                raise ConanException("Failed to parse list of recipe")
     else:
         recipes_to_create = args.name
 
@@ -56,30 +54,28 @@ def create_top_versions(conan_api, parser, *args):
     out.info(profile_build.dumps())
 
     for item in recipes_to_create:
-
         recipe_name = item if not isinstance(item, dict) else list(item.keys())[0]
-        folders = None if not isinstance(item, dict) else item[recipe_name][0]['folders']
+        out.title(recipe_name)
 
-        recipe_folder = os.path.join("recipes", recipe_name)
-
-        if not os.path.isdir(recipe_folder):
-            out.error("ABORTING - Path does not exist")
-
-        config_file = os.path.join(recipe_folder, "config.yml")
-
+        config_file = os.path.join("recipes", recipe_name, "config.yml")
         if not os.path.exists(config_file):
-            out.error(f"ABORTING: file {config_file} does not exist")
+            out.error(f"The file {config_file} does not exist")
+            return created, failed
 
+        # Add the upper most version for each new recipe folder we have.
+        known_versions = {}
         with open(config_file, "r") as file:
             config = yaml.safe_load(file)
 
-            all_versions = config["versions"]
+            for version, folder in config["versions"].items():
+                folder_name = folder['folder']
+                if not folder_name in known_versions:
+                    known_versions.update({folder_name: version})
 
-            # Assume that the version to build is the first in the list,
-            # this may not be right
-            # TODO: ensure that we respect 'folders'
-            version_to_build = list(all_versions.keys())[0]
-
+        # Since we will "conan install --build=missing --requires"
+        # We dont need to go to each recipe folder and do a build
+        # This is assuming the "export all command" was run before hand
+        for _, version_to_build in known_versions.items():
             reference = f"{recipe_name}/{version_to_build}"
             out.title(reference)
             in_cache = False if not conan_api.search.recipes(reference, remote=None) else True # None remote is "local cache"
@@ -88,7 +84,6 @@ def create_top_versions(conan_api, parser, *args):
                 continue
 
             requires = [RecipeReference.loads(reference)]
-
             root_node = conan_api.graph.load_root_virtual_conanfile(requires=requires,
                                                                 tool_requires=[],
                                                                 profile_host=profile_host)
@@ -99,8 +94,6 @@ def create_top_versions(conan_api, parser, *args):
                                             remotes=[],
                                             update=False,
                                             check_update=False)
-
-            out.writeln(deps_graph)
             print_graph_basic(deps_graph)
             if deps_graph.error:
                 out.writeln(f"{reference} - error computing dependency graph")
@@ -124,7 +117,7 @@ def create_top_versions(conan_api, parser, *args):
                 failed.add((reference, str(e)))
 
 
-             # TODO: probably want to show the entire reference (rrev and prev)
+            # TODO: probably want to show the entire reference (rrev and prev)
 
 
     out.title("--------- BUILT RECIPES ---------")
@@ -135,5 +128,5 @@ def create_top_versions(conan_api, parser, *args):
     for item in failed:
         out.writeln(f"{item[0]}, reason: {item[1]}")
 
-    return result
+    return created, failed
 
