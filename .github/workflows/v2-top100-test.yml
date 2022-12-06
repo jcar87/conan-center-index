@@ -29,7 +29,4 @@ jobs:
 
     - run: |
           echo '## ConanCenterIndex 2.0 Migration Effort' >> $GITHUB_STEP_SUMMARY
-          for file in $RECIPES; do
-            conan cci:create-top-versions $file --format json > result.json
-            jq -r '" * \(.message): \(.length)"' recipes2.json >> $GITHUB_STEP_SUMMARY
-          done
+          conan cci:create-top-versions --list=.github/workflows/short-100-list.yml -s complier.cppstd=14
