@@ -8,8 +8,11 @@ import yaml
 from conan.api.output import ConanOutput
 from conan.cli.command import conan_command, OnceArgument
 
-def output_json(exported):
-    print(json.dumps({"exported": [r for r in exported]}))
+def output_json(exported, failures):
+    print(json.dumps({
+        "exported": [r for r in exported],
+        "failures": [f for f in failures]
+    }))
 
 
 @conan_command(group="Conan Center Index", formatters={"json": output_json})
@@ -44,13 +47,13 @@ def export_all_versions(conan_api, parser, *args):
         recipe_folder = os.path.join("recipes", recipe_name)
         if not os.path.isdir(recipe_folder):
             out.error(f"ABORTING - {recipe_name}'s folder does not exist")
-            return
+            return exported, failed
 
         config_file = os.path.join(recipe_folder, "config.yml")
 
         if not os.path.exists(config_file):
             out.error(f"ABORTING: file {config_file} does not exist")
-            return
+            return exported, failed
 
         with open(config_file, "r") as file:
             config = yaml.safe_load(file)
@@ -78,4 +81,4 @@ def export_all_versions(conan_api, parser, *args):
     for item in failed:
         out.info(f"{item[0]}, reason: {item[1]}")
 
-    return exported
+    return exported, failed
