@@ -28,25 +28,23 @@ def output_markdown(results):
     <td> Recipe </td> <td> Reason </td>
     </th>"""))
 
-    for item in failures:
-        # print(f"{item[0]} | ```{item[1]}```".replace("\n", " "))
+    for key, value in failures.items():
         print(textwrap.dedent(f"""
             <tr>
-            <td> {item[0]} </td>
+            <td> {key} </td>
             <td>
 
             ```txt
             """))
-        print(f"{item[1]}")
+        print(f"{value}")
         print(textwrap.dedent(f"""
             ```
 
             </td>
             </tr>
-            </table>
             """))
 
-    print("")
+    print("</table>")
 
 
 @conan_command(group="Conan Center Index", formatters={"json": output_json, "md": output_markdown})
@@ -72,7 +70,7 @@ def export_all_versions(conan_api, parser, *args):
         recipes_to_export = args.name
 
     exported = []
-    failed = set()
+    failed = dict()
 
     for item in recipes_to_export:
         recipe_name = item if not isinstance(item, dict) else list(item.keys())[0]
@@ -105,14 +103,14 @@ def export_all_versions(conan_api, parser, *args):
                         out.verbose(f"Exported {ref}")
                         exported.append(ref)
                     except Exception as e:
-                        failed.add((f"{recipe_name}/{recipe_subfolder}", str(e)))
+                        failed.update({f"{recipe_name}/{recipe_subfolder}": str(e)})
 
     out.title("EXPORTED RECIPES")
     for item in exported:
         out.info(f"{item[0]}")
 
     out.title("FAILED TO EXPORT")
-    for item in failed:
+    for item in failed.items():
         out.info(f"{item[0]}")
 
     return {"exported": exported, "failures": failed}

@@ -12,3 +12,4 @@ recipes:
   - zstd
   - sqlite3
   - spdlog
+  - jwt-cpp
