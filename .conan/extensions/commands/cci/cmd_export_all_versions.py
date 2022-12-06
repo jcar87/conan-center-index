@@ -8,10 +8,10 @@ import yaml
 from conan.api.output import ConanOutput
 from conan.cli.command import conan_command, OnceArgument
 
-def output_json(exported, failures):
+def output_json(results):
     print(json.dumps({
-        "exported": [r for r in exported],
-        "failures": [f for f in failures]
+        "exported": [repr(r) for r in results["exported"]],
+        "failures": [f for f in results["failures"]]
     }))
 
 
@@ -71,7 +71,7 @@ def export_all_versions(conan_api, parser, *args):
                         out.verbose(f"Exported {ref}")
                         exported.append(ref)
                     except Exception as e:
-                        failed.add((ref, str(e)))
+                        failed.add((f"{recipe_name}/{recipe_subfolder}", str(e)))
 
     out.title("EXPORTED RECIPES")
     for item in exported:
@@ -79,6 +79,6 @@ def export_all_versions(conan_api, parser, *args):
 
     out.title("FAILED TO EXPORT")
     for item in failed:
-        out.info(f"{item[0]}, reason: {item[1]}")
+        out.info(f"{item[0]}")
 
-    return exported, failed
+    return {"exported": exported, "failures": failed}
