@@ -6,7 +6,8 @@ recipes:
   - fmt
   - gtest
   - catch2:
-     - folders: ["3.x.x"]
+     folders:
+     - "3.x.x"
   - libiconv
   - rapidjson
   - zstd
