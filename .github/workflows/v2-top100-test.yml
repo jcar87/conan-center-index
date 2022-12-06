@@ -26,8 +26,8 @@ jobs:
         conan profile detect --name default
 
     - name: conan export
-      run: conan cci:export-all-versions --list=.github/workflows/top_100_recipes.yaml
+      run: conan cci:export-all-versions --list=.github/top_100_recipes.yaml
 
     - run: |
           echo '## ConanCenterIndex 2.0 Migration Effort' >> $GITHUB_STEP_SUMMARY
-          conan cci:create-top-versions --list=.github/workflows/short-100-list.yml -s complier.cppstd=14
+          conan cci:create-top-versions --list=.github/short-100-list.yml -s complier.cppstd=14
