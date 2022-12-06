@@ -19,15 +19,13 @@ jobs:
       uses: lukka/get-cmake@latest # Should be set to CMake 3.15 which is the min for 2.0
 
     - run: python3 -m pip install conan==2.0.0b6
-    - run: |
+    - name: conan config
+      run: |
         conan config home
         conan config install .conan
 
     - name: conan export
-      run: |
-          for file in $RECIPES; do
-            conan cci:export-all-versions $file
-          done
+      run: conan cci:export-all-versions --list=.github/workflows/top_100_recipes.yaml
 
     - run: |
           echo '## ConanCenterIndex 2.0 Migration Effort' >> $GITHUB_STEP_SUMMARY

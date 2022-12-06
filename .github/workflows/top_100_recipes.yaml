@@ -1,7 +1,8 @@
 ---
 recipes:
   - zlib
-  - openssl
+  - openssl:
+     - folders: ["3.x.x"]
   - boost
   - nlohmann_json
   - bzip2
