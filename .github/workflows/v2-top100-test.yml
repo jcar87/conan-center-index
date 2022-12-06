@@ -23,6 +23,7 @@ jobs:
       run: |
         conan config home
         conan config install .conan
+        conan profile detect --name default
 
     - name: conan export
       run: conan cci:export-all-versions --list=.github/workflows/top_100_recipes.yaml
