@@ -1,5 +1,6 @@
 import os
 import json
+import textwrap
 import yaml
 
 # conan config install .conan
@@ -14,8 +15,41 @@ def output_json(results):
         "failures": [f for f in results["failures"]]
     }))
 
+def output_markdown(results):
+    failures = results["failures"]
+    print(textwrap.dedent(f"""
+    ### Conan Export Results
 
-@conan_command(group="Conan Center Index", formatters={"json": output_json})
+    Successfully exported {len(results["exported"])} versions while encountering {len(failures)} recipes that could not be exported; there are
+
+
+    <table>
+    <th>
+    <td> Recipe </td> <td> Reason </td>
+    </th>"""))
+
+    for item in failures:
+        # print(f"{item[0]} | ```{item[1]}```".replace("\n", " "))
+        print(textwrap.dedent(f"""
+            <tr>
+            <td> {item[0]} </td>
+            <td>
+
+            ```txt
+            """))
+        print(f"{item[1]}")
+        print(textwrap.dedent(f"""
+            ```
+
+            </td>
+            </tr>
+            </table>
+            """))
+
+    print("")
+
+
+@conan_command(group="Conan Center Index", formatters={"json": output_json, "md": output_markdown})
 def export_all_versions(conan_api, parser, *args):
     """
     Export all version for a recipe

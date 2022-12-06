@@ -21,13 +21,14 @@ jobs:
     - run: python3 -m pip install conan==2.0.0b6
     - name: conan config
       run: |
+        echo '## ConanCenterIndex 2.0 Migration Effort' >> $GITHUB_STEP_SUMMARY
+        echo 'This workflow will export and build all the package the represent (or are required for) the top 80% or downloaded packages' >> $GITHUB_STEP_SUMMARY
         conan config home
         conan config install .conan
         conan profile detect --name default
 
     - name: conan export
-      run: conan cci:export-all-versions --list=.github/top_100_recipes.yaml
+      run: conan cci:export-all-versions --list=.github/top_100_recipes.yaml -f md >> $GITHUB_STEP_SUMMARY
 
-    - run: |
-          echo '## ConanCenterIndex 2.0 Migration Effort' >> $GITHUB_STEP_SUMMARY
-          conan cci:create-top-versions --list=.github/short-100-list.yml -s complier.cppstd=14
+    - name: conan create
+      run: conan cci:create-top-versions --list=.github/short-100-list.yml -s complier.cppstd=14
