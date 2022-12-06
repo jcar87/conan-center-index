@@ -104,10 +104,17 @@ def create_top_versions(conan_api, parser, *args):
             print_graph_basic(deps_graph)
             if deps_graph.error:
                 out.writeln(f"{reference} - error computing dependency graph")
+                failed.add((reference, deps_graph.error))
+                continue
 
-            conan_api.graph.analyze_binaries(deps_graph, build_mode=["missing"], remotes=[], update=False,
-                                     lockfile=None)
-            print_graph_packages(deps_graph)
+            try:
+                conan_api.graph.analyze_binaries(deps_graph, build_mode=["missing"], remotes=[], update=False,
+                                        lockfile=None)
+                print_graph_packages(deps_graph)
+            except Exception as e:
+                out.writeln(f"Something failed with {reference}: {str(e)}")
+                failed.add((reference, str(e)))
+                continue
 
             try:
                 conan_api.install.install_binaries(deps_graph=deps_graph, remotes=[], update=False)
