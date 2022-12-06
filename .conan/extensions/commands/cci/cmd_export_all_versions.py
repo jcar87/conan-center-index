@@ -81,6 +81,4 @@ def export_all_versions(conan_api, parser, *args):
     for item in failed:
         out.writeln(item)
 
-
-
     return result
