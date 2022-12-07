@@ -14,7 +14,7 @@ jobs:
     - name: setup python
       uses: actions/setup-python@v4
       with:
-        python-version: 3.8 # Should be 3.6 for 2.0 min (double check)
+        python-version: 3.8 # Should be 3.6 for 2.0 min
     - name: install cmake
       uses: lukka/get-cmake@latest # Should be set to CMake 3.15 which is the min for 2.0
 

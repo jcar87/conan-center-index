@@ -4,11 +4,13 @@ import textwrap
 import yaml
 
 # conan config install .conan
-# conan cci:export-all-versions fmt
+# conan cci:export-all-versions -n fmt
 
 from conan.api.output import ConanOutput
 from conan.cli.command import conan_command, OnceArgument
 from conan.errors import ConanException
+
+from .cci_list_or_name import parse_list_from_args
 
 def output_json(results):
     print(json.dumps({
@@ -57,23 +59,9 @@ def export_all_versions(conan_api, parser, *args):
     parser.add_argument('-l', '--list', action=OnceArgument, help="YAML file with list of recipes to export")
     args = parser.parse_args(*args)
 
+    recipes_to_export = parse_list_from_args(args)
+
     out = ConanOutput()
-
-    recipes_to_export = []
-
-    if args.list:
-        out.verbose(f"Parsing recipes from list {args.list}")
-        with open(args.list, "r") as stream:
-            try:
-                recipes_to_export = yaml.safe_load(stream)['recipes']
-            except yaml.YAMLError as exc:
-                print(exc)
-    elif args.name:
-        recipes_to_export = [args.name]
-    else:
-        raise ConanException("Must specify at least -n or -l args for this to work")
-
-    assert isinstance(recipes_to_export, list), "The code expects this to be an array"
 
     # Result output variables, these should always be returned
     exported = []
@@ -85,13 +73,11 @@ def export_all_versions(conan_api, parser, *args):
 
         recipe_folder = os.path.join("recipes", recipe_name)
         if not os.path.isdir(recipe_folder):
-            out.error(f"Invalid user input: '{recipe_name}' folder does not exist")
-            return exported, failed
+            raise ConanException(f"Invalid user input: '{recipe_name}' folder does not exist")
 
         config_file = os.path.join(recipe_folder, "config.yml")
         if not os.path.isfile(config_file):
-            out.error(f"The file {config_file} does not exist")
-            return exported, failed
+            raise ConanException(f"The file {config_file} does not exist")
 
         with open(config_file, "r") as file:
             config = yaml.safe_load(file)
@@ -99,8 +85,7 @@ def export_all_versions(conan_api, parser, *args):
                 recipe_subfolder = config["versions"][version]["folder"]
                 conanfile = os.path.join(recipe_folder, recipe_subfolder, "conanfile.py")
                 if not os.path.isfile(conanfile):
-                    out.error(f"The file {conanfile} does not exist")
-                    return exported, failed
+                    raise ConanException(f"The file {conanfile} does not exist")
 
                 out.verbose(f"Exporting {recipe_name}/{version} from {recipe_subfolder}/")
                 try:

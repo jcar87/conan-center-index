@@ -11,13 +11,15 @@ from conan.cli.command import conan_command, OnceArgument
 from conan.cli.printers.graph import print_graph_basic, print_graph_packages
 from conan.errors import ConanException
 
-
 # is this the correct API?
 from conans.model.recipe_ref import RecipeReference
 
+from .cci_list_or_name import parse_list_from_args
 
-def output_json(exported):
-    return json.dumps({"exported": [repr(r) for r in exported]})
+def output_json(results):    print(json.dumps({
+        "created": [repr(r) for r in results["created"]],
+        "failures": [f for f in results["failures"]]
+    }))
 
 @conan_command(group="Conan Center Index", formatters={"json": output_json})
 def create_top_versions(conan_api, parser, *args):
@@ -29,19 +31,9 @@ def create_top_versions(conan_api, parser, *args):
     add_profiles_args(parser)
     args = parser.parse_args(*args)
 
-    out = ConanOutput()
+    recipes_to_create = parse_list_from_args(args)
 
-    recipes_to_create = []
-    if args.list:
-        out.verbose(f"Parsing recipes from list {args.list}")
-        with open(args.list, "r") as stream:
-            try:
-                recipes_to_create = yaml.safe_load(stream)['recipes']
-            except yaml.YAMLError as exc:
-                out.error(exc)
-                raise ConanException("Failed to parse list of recipe")
-    else:
-        recipes_to_create = args.name
+    out = ConanOutput()
 
     created = []
     failed = set()
@@ -59,8 +51,7 @@ def create_top_versions(conan_api, parser, *args):
 
         config_file = os.path.join("recipes", recipe_name, "config.yml")
         if not os.path.exists(config_file):
-            out.error(f"The file {config_file} does not exist")
-            return created, failed
+            raise ConanException(f"The file {config_file} does not exist")
 
         # Add the upper most version for each new recipe folder we have.
         known_versions = {}
@@ -80,7 +71,8 @@ def create_top_versions(conan_api, parser, *args):
             out.title(reference)
             in_cache = False if not conan_api.search.recipes(reference, remote=None) else True # None remote is "local cache"
             if not in_cache:
-                failed.add((reference, "Not in cache - fails to export"))
+                out.warning(f"{reference} was not found in the cache and will be skipped")
+                failed.add((reference, "Not in cache - probably fails to export"))
                 continue
 
             requires = [RecipeReference.loads(reference)]
@@ -96,7 +88,7 @@ def create_top_versions(conan_api, parser, *args):
                                             check_update=False)
             print_graph_basic(deps_graph)
             if deps_graph.error:
-                out.writeln(f"{reference} - error computing dependency graph")
+                out.error(f"{reference} - error computing dependency graph")
                 failed.add((reference, deps_graph.error))
                 continue
 
@@ -105,7 +97,7 @@ def create_top_versions(conan_api, parser, *args):
                                         lockfile=None)
                 print_graph_packages(deps_graph)
             except Exception as e:
-                out.writeln(f"Something failed with {reference}: {str(e)}")
+                out.error(f"Something failed with: {str(e)}")
                 failed.add((reference, str(e)))
                 continue
 
@@ -113,20 +105,18 @@ def create_top_versions(conan_api, parser, *args):
                 conan_api.install.install_binaries(deps_graph=deps_graph, remotes=[], update=False)
                 created.append(reference)
             except Exception as e:
-                out.writeln(f"Something failed with {reference}: {str(e)}")
+                out.error(f"Something failed with: {str(e)}")
                 failed.add((reference, str(e)))
-
 
             # TODO: probably want to show the entire reference (rrev and prev)
 
-
-    out.title("--------- BUILT RECIPES ---------")
+    out.title("BUILT RECIPES")
     for item in created:
-        out.writeln(item)
+        out.info(item)
 
-    out.title("--------- FAILED TO BUILD ---------")
+    out.title("FAILED TO BUILD")
     for item in failed:
-        out.writeln(f"{item[0]}, reason: {item[1]}")
+        out.info(f"{item[0]}")
 
-    return created, failed
+    return {"created": created, "failures": failed}
 
