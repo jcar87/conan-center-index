@@ -1,5 +1,6 @@
 import os
 import json
+import textwrap
 import yaml
 
 # conan config install .conan
@@ -21,7 +22,39 @@ def output_json(results):    print(json.dumps({
         "failures": [f for f in results["failures"]]
     }))
 
-@conan_command(group="Conan Center Index", formatters={"json": output_json})
+def output_markdown(results):
+    failures = results["failures"]
+    print(textwrap.dedent(f"""
+    ### Conan Export Results
+
+    Successfully build {len(results["created"])} packages while encountering {len(failures)} recipes that could not be built; these are
+
+
+    <table>
+    <th>
+    <td> Package </td> <td> Reason </td>
+    </th>"""))
+
+    for key, value in failures.items():
+        print(textwrap.dedent(f"""
+            <tr>
+            <td> {key} </td>
+            <td>
+
+            ```txt
+            """))
+        print(f"{value}")
+        print(textwrap.dedent(f"""
+            ```
+
+            </td>
+            </tr>
+            """))
+
+    print("</table>")
+
+
+@conan_command(group="Conan Center Index", formatters={"json": output_json, "md": output_markdown})
 def create_top_versions(conan_api, parser, *args):
     """
     Build the "top" version from each recipe folder
@@ -36,7 +69,7 @@ def create_top_versions(conan_api, parser, *args):
     out = ConanOutput()
 
     created = []
-    failed = set()
+    failed = dict()
 
     profile_host, profile_build = conan_api.profiles.get_profiles_from_args(args)
     out.title("Input profiles")
@@ -47,7 +80,7 @@ def create_top_versions(conan_api, parser, *args):
 
     for item in recipes_to_create:
         recipe_name = item if not isinstance(item, dict) else list(item.keys())[0]
-        out.title(recipe_name)
+        out.verbose(f"Beginning to look into {recipe_name}")
 
         config_file = os.path.join("recipes", recipe_name, "config.yml")
         if not os.path.exists(config_file):
@@ -72,7 +105,7 @@ def create_top_versions(conan_api, parser, *args):
             in_cache = False if not conan_api.search.recipes(reference, remote=None) else True # None remote is "local cache"
             if not in_cache:
                 out.warning(f"{reference} was not found in the cache and will be skipped")
-                failed.add((reference, "Not in cache - probably fails to export"))
+                failed.update({reference: "Not in cache - probably fails to export"})
                 continue
 
             requires = [RecipeReference.loads(reference)]
@@ -89,7 +122,7 @@ def create_top_versions(conan_api, parser, *args):
             print_graph_basic(deps_graph)
             if deps_graph.error:
                 out.error(f"{reference} - error computing dependency graph")
-                failed.add((reference, deps_graph.error))
+                failed.update({reference: deps_graph.error})
                 continue
 
             try:
@@ -98,7 +131,7 @@ def create_top_versions(conan_api, parser, *args):
                 print_graph_packages(deps_graph)
             except Exception as e:
                 out.error(f"Something failed with: {str(e)}")
-                failed.add((reference, str(e)))
+                failed.update({reference: str(e)})
                 continue
 
             try:
@@ -106,7 +139,7 @@ def create_top_versions(conan_api, parser, *args):
                 created.append(reference)
             except Exception as e:
                 out.error(f"Something failed with: {str(e)}")
-                failed.add((reference, str(e)))
+                failed.update({reference: str(e)})
 
             # TODO: probably want to show the entire reference (rrev and prev)
 

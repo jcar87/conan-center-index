@@ -31,4 +31,4 @@ jobs:
       run: conan cci:export-all-versions --list=.github/top_100_recipes.yaml -f md >> $GITHUB_STEP_SUMMARY
 
     - name: conan create
-      run: conan cci:create-top-versions --list=.github/top_100_recipes.yaml -s complier.cppstd=14
+      run: conan cci:create-top-versions --list=.github/top_100_recipes.yaml -s complier.cppstd=14 -f md >> $GITHUB_STEP_SUMMARY

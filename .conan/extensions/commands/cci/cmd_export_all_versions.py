@@ -23,7 +23,7 @@ def output_markdown(results):
     print(textwrap.dedent(f"""
     ### Conan Export Results
 
-    Successfully exported {len(results["exported"])} versions while encountering {len(failures)} recipes that could not be exported; there are
+    Successfully exported {len(results["exported"])} versions while encountering {len(failures)} recipes that could not be exported; these are
 
 
     <table>
