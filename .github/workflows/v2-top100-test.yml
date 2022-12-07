@@ -15,7 +15,8 @@ jobs:
     - name: install cmake
       uses: lukka/get-cmake@latest # Should be set to CMake 3.15 which is the min for 2.0
 
-    - run: python3 -m pip install conan==2.0.0b6
+    #- run: python3 -m pip install conan==2.0.0b6
+    - run: python3 -m pip install "conan @ git+https://github.com/conan-io/conan.git@develop2"
     - name: conan config
       run: |
         echo '## ConanCenterIndex 2.0 Migration Effort' >> $GITHUB_STEP_SUMMARY
