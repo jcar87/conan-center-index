@@ -7,23 +7,22 @@ import yaml
 # conan cci:export-all-versions -n fmt
 
 from conan.api.output import ConanOutput
-from conan.cli.command import conan_command, OnceArgument
+from conan.cli.command import conan_command, OnceArgument, CommandResult
 from conan.errors import ConanException
 
 from .cci_list_or_name import parse_list_from_args
 
-def output_json(results):
+def output_json(exported, failures):
     print(json.dumps({
-        "exported": [repr(r) for r in results["exported"]],
-        "failures": [f for f in results["failures"]]
+        "exported": [repr(r) for r in exported],
+        "failures": failures
     }))
 
-def output_markdown(results):
-    failures = results["failures"]
+def output_markdown(exported, failures):
     print(textwrap.dedent(f"""
     ### Conan Export Results
 
-    Successfully exported {len(results["exported"])} versions while encountering {len(failures)} recipes that could not be exported; these are
+    Successfully exported {len(exported)} versions while encountering {len(failures)} recipes that could not be exported; these are
 
 
     <table>
@@ -50,7 +49,7 @@ def output_markdown(results):
     print("</table>")
 
 
-@conan_command(group="Conan Center Index", formatters={"json": output_json, "md": output_markdown})
+@conan_command(group="Conan Center Index", formatters={"text": lambda exported, failures: None, "json": output_json, "md": output_markdown})
 def export_all_versions(conan_api, parser, *args):
     """
     Export all version for a recipe
@@ -103,4 +102,4 @@ def export_all_versions(conan_api, parser, *args):
     for item in failed.items():
         out.info(f"{item[0]}")
 
-    return {"exported": exported, "failures": failed}
+    return CommandResult({"exported": exported, "failures": failed})
