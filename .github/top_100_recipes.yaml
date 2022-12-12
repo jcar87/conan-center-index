@@ -110,3 +110,8 @@ recipes:
   - icu
   - libalsa
   - jwt-cpp
+# the following are needed by some of the above:
+  - xkeyboard-config
+  - imath
+  - libelf
+  - xsimd

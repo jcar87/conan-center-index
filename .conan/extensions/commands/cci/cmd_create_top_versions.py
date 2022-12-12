@@ -149,7 +149,7 @@ def create_top_versions(conan_api, parser, *args):
 
     out.title("FAILED TO BUILD")
     for item in failed:
-        out.info(f"{item[0]}")
+        out.info(f"{item}")
 
     return {"created": created, "failures": failed}
 
