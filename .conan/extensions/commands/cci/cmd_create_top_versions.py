@@ -4,7 +4,7 @@ import textwrap
 import yaml
 
 # conan config install .conan
-# conan cci:create-top-versions fmt
+# conan cci:create-top-versions -n fmt
 
 from conan.api.output import ConanOutput
 from conan.cli.args import add_profiles_args
