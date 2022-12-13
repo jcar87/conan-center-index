@@ -108,24 +108,10 @@ def create_top_versions(conan_api, parser, *args):
                 failed.update({reference: "Not in cache - probably fails to export"})
                 continue
 
-            requires = [RecipeReference.loads(reference)]
-            root_node = conan_api.graph.load_root_virtual_conanfile(requires=requires,
-                                                                tool_requires=[],
-                                                                profile_host=profile_host)
-
-            deps_graph = conan_api.graph.load_graph(root_node, profile_host=profile_host,
-                                            profile_build=profile_build,
-                                            lockfile=None,
-                                            remotes=[],
-                                            update=False,
-                                            check_update=False)
-            print_graph_basic(deps_graph)
-            if deps_graph.error:
-                out.error(f"{reference} - error computing dependency graph")
-                failed.update({reference: deps_graph.error})
-                continue
-
             try:
+                deps_graph = conan_api.graph.load_graph_requires(requires=[reference], tool_requires=[],
+                    profile_host=profile_host, profile_build=profile_build, lockfile=None, remotes=[],
+                    update=False, check_updates=False)
                 conan_api.graph.analyze_binaries(deps_graph, build_mode=["missing"], remotes=[], update=False,
                                         lockfile=None)
                 print_graph_packages(deps_graph)
@@ -143,11 +129,11 @@ def create_top_versions(conan_api, parser, *args):
 
             # TODO: probably want to show the entire reference (rrev and prev)
 
-    out.title("BUILT RECIPES")
+    out.title("Built recipes")
     for item in created:
         out.info(item)
 
-    out.title("FAILED TO BUILD")
+    out.title("Failed to build")
     for item in failed:
         out.info(f"{item}")
 
