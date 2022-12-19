@@ -9,9 +9,11 @@ import yaml
 from conan.api.output import ConanOutput
 from conan.cli.args import add_profiles_args
 from conan.cli.command import conan_command, OnceArgument
+from conan.cli.commands.test import run_test
 from conan.cli.printers.graph import print_graph_basic, print_graph_packages
 from conan.errors import ConanException
 
+from conan.tools.scm import Version
 # is this the correct API?
 from conans.model.recipe_ref import RecipeReference
 
@@ -25,9 +27,9 @@ def output_json(results):    print(json.dumps({
 def output_markdown(results):
     failures = results["failures"]
     print(textwrap.dedent(f"""
-    ### Conan Export Results
+    ### Conan Build and Test Results
 
-    Successfully build {len(results["created"])} packages while encountering {len(failures)} recipes that could not be built; these are
+    Successfully built {len(results["created"])} packages while encountering {len(failures)} recipes that could not be built; these are
 
 
     <table>
@@ -68,8 +70,8 @@ def create_top_versions(conan_api, parser, *args):
 
     out = ConanOutput()
 
-    created = []
-    failed = dict()
+    created = {}
+    failed = {}
 
     profile_host, profile_build = conan_api.profiles.get_profiles_from_args(args)
     out.title("Input profiles")
@@ -93,13 +95,13 @@ def create_top_versions(conan_api, parser, *args):
 
             for version, folder in config["versions"].items():
                 folder_name = folder['folder']
-                if not folder_name in known_versions:
+                if not folder_name in known_versions or Version(version) > Version(known_versions[folder_name]):
                     known_versions.update({folder_name: version})
 
         # Since we will "conan install --build=missing --requires"
         # We dont need to go to each recipe folder and do a build
         # This is assuming the "export all command" was run before hand
-        for _, version_to_build in known_versions.items():
+        for folder_name, version_to_build in known_versions.items():
             reference = f"{recipe_name}/{version_to_build}"
             out.title(reference)
             in_cache = False if not conan_api.search.recipes(reference, remote=None) else True # None remote is "local cache"
@@ -122,16 +124,29 @@ def create_top_versions(conan_api, parser, *args):
 
             try:
                 conan_api.install.install_binaries(deps_graph=deps_graph, remotes=[], update=False)
-                created.append(reference)
+                created.update({reference: None})
+
             except Exception as e:
                 out.error(f"Something failed with: {str(e)}")
                 failed.update({reference: str(e)})
 
+            # TODO: call test package
+            if reference in created.keys():
+                try:
+                    test_package_folder = os.path.join(os.getcwd(), "recipes", recipe_name, folder_name, "test_package", "conanfile.py")
+                    run_test(conan_api, test_package_folder, RecipeReference.loads(reference), profile_host, profile_build, remotes=[], lockfile=None, update=False, build_modes=None)
+                    created[reference] = True
+                except Exception as e:
+                    out.error(f"Test package failed with: {str(e)}")
+                    created[reference] = False
+                    failed.update({reference: f"Package succeeded build, but failed during test_package with error:\n{str(e)}"})
+
             # TODO: probably want to show the entire reference (rrev and prev)
 
     out.title("Built recipes")
-    for item in created:
-        out.info(item)
+    for reference, test_package in created.items():
+        test_package_text = "" if test_package else "(! failed test pacakge)"
+        out.info(f"{reference} {test_package_text}")
 
     out.title("Failed to build")
     for item in failed:

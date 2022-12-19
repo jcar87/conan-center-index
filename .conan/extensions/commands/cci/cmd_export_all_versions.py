@@ -7,22 +7,24 @@ import yaml
 # conan cci:export-all-versions -n fmt
 
 from conan.api.output import ConanOutput
-from conan.cli.command import conan_command, OnceArgument, CommandResult
+from conan.cli.command import conan_command, OnceArgument
 from conan.errors import ConanException
 
 from .cci_list_or_name import parse_list_from_args
 
-def output_json(exported, failures):
+def output_json(result):
     print(json.dumps({
-        "exported": [repr(r) for r in exported],
-        "failures": failures
+        "exported": [repr(r) for r in result['exported']],
+        "failures": result['failures']
     }))
 
-def output_markdown(exported, failures):
+def output_markdown(result):
+    exported = result['exported']
+    failures = result['failures']
     print(textwrap.dedent(f"""
     ### Conan Export Results
 
-    Successfully exported {len(exported)} versions while encountering {len(failures)} recipes that could not be exported; these are
+    Successfully exported {sum([len(versions) for versions in exported.values()])} versions from {len(exported.keys())} recipes while encountering {len(failures)} recipes that could not be exported; these are
 
 
     <table>
@@ -49,7 +51,7 @@ def output_markdown(exported, failures):
     print("</table>")
 
 
-@conan_command(group="Conan Center Index", formatters={"text": lambda exported, failures: None, "json": output_json, "md": output_markdown})
+@conan_command(group="Conan Center Index", formatters={"text": lambda result: None, "json": output_json, "md": output_markdown})
 def export_all_versions(conan_api, parser, *args):
     """
     Export all version for a recipe
@@ -63,7 +65,7 @@ def export_all_versions(conan_api, parser, *args):
     out = ConanOutput()
 
     # Result output variables, these should always be returned
-    exported = []
+    exported = {}
     failed = dict()
 
     for item in recipes_to_export:
@@ -90,16 +92,19 @@ def export_all_versions(conan_api, parser, *args):
                 try:
                     ref = conan_api.export.export(os.path.abspath(conanfile), recipe_name, version, None, None)
                     out.verbose(f"Exported {ref}")
-                    exported.append(ref)
+                    # exported.append(ref)
+                    if recipe_name not in exported:
+                        exported[recipe_name] = []
+                    exported[recipe_name].append(ref)
                 except Exception as e:
                     failed.update({f"{recipe_name}/{recipe_subfolder}": str(e)})
 
     out.title("EXPORTED RECIPES")
-    for item in exported:
-        out.info(f"{item[0]}")
+    for item in exported.keys():
+        out.info(f"{item}: exported {len(exported[item])} versions")
 
     out.title("FAILED TO EXPORT")
     for item in failed.items():
         out.info(f"{item[0]}")
 
-    return CommandResult({"exported": exported, "failures": failed})
+    return {"exported": exported, "failures": failed}
