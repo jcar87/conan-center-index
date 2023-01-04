@@ -10,7 +10,7 @@ from conan.api.output import ConanOutput
 from conan.cli.args import add_profiles_args
 from conan.cli.command import conan_command, OnceArgument
 from conan.cli.commands.test import run_test
-from conan.cli.printers.graph import print_graph_basic, print_graph_packages
+from conan.cli.printers.graph import print_graph_packages
 from conan.errors import ConanException
 
 from conan.tools.scm import Version
