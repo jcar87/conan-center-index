@@ -26,16 +26,10 @@ def output_json(results):    print(json.dumps({
 
 def output_markdown(results):
     failures = results["failures"]
-    failed_test_count = sum(1 for created in results["created"] if not created)
     print(textwrap.dedent(f"""
     ### Conan Build and Test Results
 
-    Successfully built {sum(1 for created in results["created"] if created)} packages while encountering<br/>
-
-    * {failed_test_count} that built but which failed in test_package
-    * {len(failures) - failed_test_count} recipes that could not be built</li>
-
-    these are:
+    Successfully built {len(results["created"])} packages while encountering {len(failures)} recipes that could not be built; these are
 
 
     <table>
@@ -124,29 +118,27 @@ def create_top_versions(conan_api, parser, *args):
                                         lockfile=None)
                 print_graph_packages(deps_graph)
             except Exception as e:
-                out.error(f"Something failed with: {str(e)}")
+                out.error(f"{reference} load graph failed with: {str(e)}")
                 failed.update({reference: str(e)})
                 continue
 
             try:
                 conan_api.install.install_binaries(deps_graph=deps_graph, remotes=[], update=False)
-                created.update({reference: None})
-
+                created.update({reference: False})
             except Exception as e:
-                out.error(f"Something failed with: {str(e)}")
+                out.error(f"{reference} build failed with: {str(e)}")
                 failed.update({reference: str(e)})
                 continue
 
-            # TODO: call test package
-            if reference in created.keys():
-                try:
-                    test_package_folder = os.path.join(os.getcwd(), "recipes", recipe_name, folder_name, "test_package", "conanfile.py")
-                    run_test(conan_api, test_package_folder, RecipeReference.loads(reference), profile_host, profile_build, remotes=[], lockfile=None, update=False, build_modes=None)
-                    created[reference] = True
-                except Exception as e:
-                    out.error(f"Test package failed with: {str(e)}")
-                    created[reference] = False
-                    failed.update({reference: f"Package succeeded build, but failed during test_package with error:\n{str(e)}"})
+            try:
+                test_package_folder = os.path.join(os.getcwd(), "recipes", recipe_name, folder_name, "test_package", "conanfile.py")
+                run_test(conan_api, test_package_folder, RecipeReference.loads(reference), profile_host, profile_build, remotes=[], lockfile=None, update=False, build_modes=None)
+                created.update({reference: True})
+            except Exception as e:
+                out.error(f"{reference} test package failed with: {str(e)}")
+                del created[reference]
+                failed.update({reference: f"Package succeeded build, but failed during test_package with error:\n{str(e)}"})
+                continue
 
             # TODO: probably want to show the entire reference (rrev and prev)
 
