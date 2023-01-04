@@ -114,7 +114,7 @@ def create_top_versions(conan_api, parser, *args):
                 deps_graph = conan_api.graph.load_graph_requires(requires=[reference], tool_requires=[],
                     profile_host=profile_host, profile_build=profile_build, lockfile=None, remotes=[],
                     update=False, check_updates=False)
-                conan_api.graph.analyze_binaries(deps_graph, build_mode=["missing"], remotes=[], update=False,
+                conan_api.graph.analyze_binaries(deps_graph, build_mode=[reference], remotes=[], update=False,
                                         lockfile=None)
                 print_graph_packages(deps_graph)
             except Exception as e:
