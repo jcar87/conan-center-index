@@ -26,10 +26,16 @@ def output_json(results):    print(json.dumps({
 
 def output_markdown(results):
     failures = results["failures"]
+    failed_test_count = sum(1 for created in results["created"] if not created)
     print(textwrap.dedent(f"""
     ### Conan Build and Test Results
 
-    Successfully built {len(results["created"])} packages while encountering {len(failures)} recipes that could not be built; these are
+    Successfully built {sum(1 for created in results["created"] if created)} packages while encountering<br/>
+
+    * {failed_test_count} that built but which failed in test_package
+    * {len(failures) - failed_test_count} recipes that could not be built</li>
+
+    these are:
 
 
     <table>
@@ -129,6 +135,7 @@ def create_top_versions(conan_api, parser, *args):
             except Exception as e:
                 out.error(f"Something failed with: {str(e)}")
                 failed.update({reference: str(e)})
+                continue
 
             # TODO: call test package
             if reference in created.keys():
