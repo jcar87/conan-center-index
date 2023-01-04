@@ -115,3 +115,5 @@ recipes:
   - imath
   - libelf
   - xsimd
+  - libbacktrace
+  - picojson
