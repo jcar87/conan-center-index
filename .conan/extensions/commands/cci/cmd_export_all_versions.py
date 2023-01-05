@@ -70,6 +70,7 @@ def export_all_versions(conan_api, parser, *args):
 
     for item in recipes_to_export:
         recipe_name = item if not isinstance(item, dict) else list(item.keys())[0]
+        folders_to_export = item[recipe_name][0]['folders'] if isinstance(item, dict) else None
         out.verbose(f"Starting recipe '{recipe_name}'")
 
         recipe_folder = os.path.join("recipes", recipe_name)
@@ -84,6 +85,8 @@ def export_all_versions(conan_api, parser, *args):
             config = yaml.safe_load(file)
             for version in config["versions"]:
                 recipe_subfolder = config["versions"][version]["folder"]
+                if folders_to_export and recipe_subfolder not in folders_to_export:
+                    continue
                 conanfile = os.path.join(recipe_folder, recipe_subfolder, "conanfile.py")
                 if not os.path.isfile(conanfile):
                     raise ConanException(f"The file {conanfile} does not exist")

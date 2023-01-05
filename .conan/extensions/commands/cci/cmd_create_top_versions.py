@@ -82,6 +82,7 @@ def create_top_versions(conan_api, parser, *args):
 
     for item in recipes_to_create:
         recipe_name = item if not isinstance(item, dict) else list(item.keys())[0]
+        folders_to_build = item[recipe_name][0]['folders'] if isinstance(item, dict) else None
         out.verbose(f"Beginning to look into {recipe_name}")
 
         config_file = os.path.join("recipes", recipe_name, "config.yml")
@@ -95,6 +96,8 @@ def create_top_versions(conan_api, parser, *args):
 
             for version, folder in config["versions"].items():
                 folder_name = folder['folder']
+                if folders_to_build and folder_name not in folders_to_build:
+                    continue
                 if not folder_name in known_versions or Version(version) > Version(known_versions[folder_name]):
                     known_versions.update({folder_name: version})
 
