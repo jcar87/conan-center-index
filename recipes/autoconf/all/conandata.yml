@@ -7,14 +7,6 @@ sources:
     url: "https://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz"
 patches:
   "2.71":
-    - patch_file: "patches/2.71-0001-autom4te-relocatable.patch"
+    - patch_file: "patches/2.71-0001-relocatable-scripts.patch"
     - patch_file: "patches/2.71-0002-no-perl-path-in-shebang.patch"
-    - patch_file: "patches/2.71-0003-uppercase-autom4te_perllibdir.patch"
-    - patch_file: "patches/2.71-0004-no-embedded-m4-paths.patch"
     - patch_file: "patches/2.71-0005-disable-man-regeneration.patch"
-    - patch_file: "patches/2.71-0006-autoconf-no-embedded-trailer_m4-path.patch"
-  "2.69":
-    - patch_file: "patches/2.69-0001-autom4te-relocatable.patch"
-    - patch_file: "patches/2.69-0002-no-perl-path-in-shebang.patch"
-    - patch_file: "patches/2.69-0003-uppercase-autom4te_perllibdir.patch"
-    - patch_file: "patches/2.69-0004-no-embedded-m4-paths.patch"
