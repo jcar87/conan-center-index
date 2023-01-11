@@ -1,9 +1,17 @@
-from conans import ConanFile, Meson, tools
-from conans.errors import ConanInvalidConfiguration
 import functools
 import os
 
-required_conan_version = ">= 1.36.0"
+from conan import ConanFile
+from conan.tools.build import cross_building
+from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rm, rmdir, replace_in_file
+from conan.tools.layout import basic_layout
+from conan.tools.meson import Meson, MesonToolchain
+from conan.tools.microsoft import is_msvc, unix_path, VCVars
+from conan.tools.scm import Version
+from conan.errors import ConanInvalidConfiguration
+
+
+required_conan_version = ">=1.36.0"
 
 
 class PkgConfConan(ConanFile):
@@ -13,7 +21,7 @@ class PkgConfConan(ConanFile):
     topics = ("pkgconf")
     license = "ISC"
     description = "package compiler and linker metadata toolkit"
-
+    #TODO: add VirtualBuildEnv generator for Conan1x
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "shared": [True, False],
@@ -30,22 +38,11 @@ class PkgConfConan(ConanFile):
     def _is_clang_cl(self):
         return self.settings.compiler == "clang" and self.settings.os == "Windows"
 
-
-    @property
-    def _source_subfolder(self):
-        return "source_subfolder"
-
-    @property
-    def _build_subfolder(self):
-        return "build_subfolder"
-
-    @property
-    def _is_msvc(self):
-        return str(self.settings.compiler) in ["Visual Studio", "msvc"]
+    def layout(self):
+        basic_layout(self)
 
     def export_sources(self):
-        for patch in self.conan_data.get("patches", {}).get(self.version, []):
-            self.copy(patch["patch_file"])
+        export_conandata_patches(self)
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -61,14 +58,14 @@ class PkgConfConan(ConanFile):
         del self.settings.compiler.cppstd
 
     def validate(self):
-        if hasattr(self, "settings_build") and tools.cross_building(self):
-            raise ConanInvalidConfiguration("Cross-building is not implemented in the recipe")
+        if cross_building(self):
+            raise ConanInvalidConfiguration("Cross-building is not implemented in the recipe, contributions welcome.")
 
     def build_requirements(self):
-        self.build_requires("meson/0.62.1")
+        self.build_requires("meson/0.64.1")
 
     def source(self):
-        tools.get(**self.conan_data["sources"][self.version], destination=self._source_subfolder, strip_root=True)
+        get(self, **self.conan_data["sources"][self.version], destination=self.source_folder, strip_root=True)
 
     @property
     def _sharedstatedir(self):
@@ -85,52 +82,68 @@ class PkgConfConan(ConanFile):
         return meson
 
     def _patch_sources(self):
-        for patch in self.conan_data.get("patches", {}).get(self.version, []):
-            tools.patch(**patch)
+        apply_conandata_patches(self)
+
         if not self.options.get_safe("shared", False):
-            tools.replace_in_file(os.path.join(self._source_subfolder, "meson.build"),
+            replace_in_file(self, os.path.join(self.source_folder, "meson.build"),
                                   "'-DLIBPKGCONF_EXPORT'",
                                   "'-DPKGCONFIG_IS_STATIC'")
-        tools.replace_in_file(os.path.join(self._source_subfolder, "meson.build"),
+            replace_in_file(self, os.path.join(self.source_folder, "meson.build"),
             "project('pkgconf', 'c',",
             "project('pkgconf', 'c',\ndefault_options : ['c_std=gnu99'],")
 
+    def generate(self):
+        tc = MesonToolchain(self)
+        tc.project_options["tests"] = False
+        tc.project_options["sharedstatedir"] = "xxx"
+        if not self.options.enable_lib:
+            tc.project_options["default_library"] = "static"
+        tc.generate()
+
     def build(self):
         self._patch_sources()
-        with tools.vcvars(self) if self._is_clang_cl else tools.no_op():
-            meson = self._configure_meson()
-            meson.build()
+        meson = Meson(self)
+        meson.configure()
+        meson.build()
+
+        # with tools.vcvars(self) if self._is_clang_cl else tools.no_op():
+        #     meson = self._configure_meson()
+        #     meson.build()
 
     def package(self):
-        self.copy("COPYING", src=self._source_subfolder, dst="licenses")
-        with tools.vcvars(self) if self._is_clang_cl else tools.no_op():
-            meson = self._configure_meson()
-            meson.install()
+        copy(self, "COPYING", src=self.source_folder, dst=os.path.join(self.package_folder,"licenses"))
 
-        if self._is_msvc:
-            tools.remove_files_by_mask(os.path.join(self.package_folder, "bin"), "*.pdb")
+        meson = Meson(self)
+        meson.install()
+        # with tools.vcvars(self) if self._is_clang_cl else tools.no_op():
+        #     meson = self._configure_meson()
+        #     meson.install()
+
+        if is_msvc(self):
+            rm(self, "*.pdb", os.path.join(self.package_folder, "bin"))
             if self.options.enable_lib and not self.options.shared:
                 os.rename(os.path.join(self.package_folder, "lib", "libpkgconf.a"),
                           os.path.join(self.package_folder, "lib", "pkgconf.lib"),)
         
         if not self.options.enable_lib:
-            tools.rmdir(os.path.join(self.package_folder, "lib"))
-            tools.rmdir(os.path.join(self.package_folder, "include"))
+            rmdir(self, os.path.join(self.package_folder, "lib"))
+            rmdir(self, os.path.join(self.package_folder, "include"))
 
-        tools.rmdir(os.path.join(self.package_folder, "share", "man"))
+        
+        rmdir(self, os.path.join(self.package_folder, "share", "man"))
         os.rename(os.path.join(self.package_folder, "share", "aclocal"),
                   os.path.join(self.package_folder, "bin", "aclocal"))
-        tools.rmdir(os.path.join(self.package_folder, "share"))
-        tools.rmdir(os.path.join(self.package_folder, "lib", "pkgconfig"))
+        rmdir(self, os.path.join(self.package_folder, "share"))
+        rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
 
     def package_id(self):
-        if not self.options.enable_lib:
+        if not self.info.options.enable_lib:
             del self.info.settings.compiler
 
     def package_info(self):
         if self.options.enable_lib:
             self.cpp_info.set_property("pkg_config_name", "libpkgconf")
-            if tools.Version(self.version) >= "1.7.4":
+            if Version(self.version) >= "1.7.4":
                 self.cpp_info.includedirs.append(os.path.join("include", "pkgconf"))
             self.cpp_info.libs = ["pkgconf"]
             if not self.options.shared:
@@ -149,9 +162,13 @@ class PkgConfConan(ConanFile):
         self.buildenv_info.define_path("PKG_CONFIG", pkg_config)
         self.env_info.PKG_CONFIG = pkg_config # remove in conan v2?
 
-        automake_extra_includes = tools.unix_path(os.path.join(self.package_folder , "bin", "aclocal").replace("\\", "/"))
+        
+        
+        self.buildenv_info.prepend_path("AUTOMAKE_CONAN_INCLUDES", os.path.join(self.package_folder , "bin", "aclocal"))
+
+        # TODO: remove in conanv2
+        automake_extra_includes = unix_path(self, os.path.join(self.package_folder , "bin", "aclocal").replace("\\", "/"))
         self.output.info("Appending AUTOMAKE_CONAN_INCLUDES env var: {}".format(automake_extra_includes))
-        self.buildenv_info.prepend_path("AUTOMAKE_CONAN_INCLUDES", automake_extra_includes)
         self.env_info.AUTOMAKE_CONAN_INCLUDES.append(automake_extra_includes) # remove in conan v2?
 
         # TODO: to remove in conan v2 once pkg_config generator removed
