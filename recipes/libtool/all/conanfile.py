@@ -1,26 +1,30 @@
 from conan import ConanFile
+from conan.errors import ConanException
 from conan.tools.apple import is_apple_os
 from conan.tools.files import apply_conandata_patches, export_conandata_patches, copy, get, rename, replace_in_file, rmdir
 from conan.tools.gnu import Autotools, AutotoolsToolchain
 from conan.tools.layout import basic_layout
 from conan.tools.microsoft import is_msvc
-from conans.errors import ConanException
-from contextlib import contextmanager
+import conans.tools as tools_legacy
+
 import os
 import re
 import shutil
 
-required_conan_version = ">=1.33.0"
+required_conan_version = ">=1.53.0"
 
 
 class LibtoolConan(ConanFile):
     name = "libtool"
+    # Package_type reflects primary use as a build tool
+    # Downstream Conan 2 consumers making use of libltdl may have to
+    # use library traits when requiring libtool.
+    package_type = "application"
     url = "https://github.com/conan-io/conan-center-index"
     homepage = "https://www.gnu.org/software/libtool/"
     description = "GNU libtool is a generic library support script. "
-    topics = ("conan", "libtool", "configure", "library", "shared", "static")
+    topics = ("conan", "configure", "library", "shared", "static")
     license = ("GPL-2.0-or-later", "GPL-3.0-or-later")
-
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "shared": [True, False],
@@ -59,6 +63,7 @@ class LibtoolConan(ConanFile):
             self.tool_requires("automake/1.16.5")
         self.tool_requires("gnu-config/cci.20210814")
         if self._settings_build.os == "Windows" and not self.conf.get("tools.microsoft.bash:path", check_type=str):
+            self.win_bash = True
             self.tool_requires("msys2/cci.latest")
 
     def source(self):
@@ -188,16 +193,6 @@ class LibtoolConan(ConanFile):
                               "lt_cv_deplibs_check_method='file_magic file format (pei*-i386(.*architecture: i386)?|pe-arm-wince|pe-x86-64)'",
                               method_pass_all)
 
-    # @property
-    # def _libtool_relocatable_env(self):
-    #     return {
-    #         "LIBTOOL_PREFIX": tools.unix_path(self.package_folder),
-    #         "LIBTOOL_DATADIR": tools.unix_path(self._datarootdir),
-    #         "LIBTOOL_PKGAUXDIR": tools.unix_path(os.path.join(self._datarootdir, "libtool", "build-aux")),
-    #         "LIBTOOL_PKGLTDLDIR": tools.unix_path(os.path.join(self._datarootdir, "libtool")),
-    #         "LIBTOOL_ACLOCALDIR": tools.unix_path(os.path.join(self._datarootdir, "aclocal")),
-    #     }
-
     def package_info(self):
         self.cpp_info.libs = ["ltdl"]
 
@@ -208,22 +203,20 @@ class LibtoolConan(ConanFile):
             if self.settings.os == "Linux":
                 self.cpp_info.system_libs = ["dl"]
 
+        # Define environment variables such that libtool m4 files are seen by Automake
+        libtool_aclocal_dir = os.path.join(self._datarootdir, "aclocal")
+        self.output.info("Appending ACLOCAL_PATH env: {}".format(libtool_aclocal_dir))
+        self.output.info("Appending AUTOMAKE_CONAN_INCLUDES environment variable: {}".format(libtool_aclocal_dir))
+
+        self.buildenv_info.append_path("ACLOCAL_PATH", libtool_aclocal_dir)
+        self.buildenv_info.append_path("AUTOMAKE_CONAN_INCLUDES", libtool_aclocal_dir)
+        self.runenv_info.append_path("ACLOCAL_PATH", libtool_aclocal_dir)
+        self.runenv_info.append_path("AUTOMAKE_CONAN_INCLUDES", libtool_aclocal_dir)
+        # For Conan 1.x downstream consumers, can be removed once recipe is Conan 1.x only:
         bin_path = os.path.join(self.package_folder, "bin")
         self.output.info("Appending PATH env: {}".format(bin_path))
         self.env_info.PATH.append(bin_path)
+        # TODO: use conan.tools.microsoft.unix_path_package_info_legacy() in Conan >=1.57
+        self.env_info.ACLOCAL_PATH.append(tools_legacy.unix_path(libtool_aclocal_dir))
+        self.env_info.AUTOMAKE_CONAN_INCLUDES.append(tools_legacy.unix_path(libtool_aclocal_dir))
 
-        bin_ext = ".exe" if self.settings.os == "Windows" else ""
-
-        # libtoolize = tools.unix_path(os.path.join(self.package_folder, "bin", "libtoolize" + bin_ext))
-        # self.output.info("Setting LIBTOOLIZE env to {}".format(libtoolize))
-        # self.env_info.LIBTOOLIZE = libtoolize
-
-        # for key, value in self._libtool_relocatable_env.items():
-        #     self.output.info("Setting {} environment variable to {}".format(key, value))
-        #     setattr(self.env_info, key, value)
-
-        libtool_aclocal = os.path.join(self._datarootdir, "aclocal")
-        self.output.info("Appending ACLOCAL_PATH env: {}".format(libtool_aclocal))
-        self.buildenv_info.append_path("ACLOCAL_PATH", libtool_aclocal)
-        self.output.info("Appending AUTOMAKE_CONAN_INCLUDES environment variable: {}".format(libtool_aclocal))
-        self.buildenv_info.append_path("AUTOMAKE_CONAN_INCLUDES", libtool_aclocal)
