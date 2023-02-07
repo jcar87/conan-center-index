@@ -7,7 +7,7 @@ from conan.tools.gnu import Autotools, AutotoolsToolchain
 from conan.tools.layout import basic_layout
 from conan.tools.microsoft import is_msvc, unix_path
 from conan.tools.scm import Version
-from conans.tools import get_gnu_triplet
+
 import glob
 import hashlib
 import os
@@ -91,7 +91,7 @@ class ICUConan(ConanFile):
                 self.tool_requires("msys2/cci.latest")
 
         if cross_building(self) and hasattr(self, "settings_build"):
-            self.tool_requires(self.ref)
+            self.tool_requires(str(self.ref))
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -127,8 +127,17 @@ class ICUConan(ConanFile):
             base_path = unix_path(self, self.dependencies.build["icu"].package_folder)
             tc.configure_args.append(f"--with-cross-build={base_path}")
             if self.settings.os in ["iOS", "tvOS", "watchOS"]:
-                gnu_triplet = get_gnu_triplet("Macos", str(self.settings.arch))
-                tc.configure_args.append(f"--host={gnu_triplet}")
+                # ICU build scripts interpret all Apple platforms as 'darwin'
+                # we also need to change the build triplet so that it does not
+                # coincide with the host one, otherwise it does not handle
+                # cross-compilation properly.
+                arch = {"x86_64": "x86_64", "armv8": "aarch64"}
+                host_triplet = f"{arch[str(self.settings.arch)]}-apple-darwin"
+                build_triplet = f"{arch[str(self.settings.arch)]}-apple"
+
+                tc.update_configure_args({"--host": host_triplet,
+                                          "--build": build_triplet})
+
             elif is_msvc(self):
                 # ICU doesn't like GNU triplet of conan for msvc (see https://github.com/conan-io/conan/issues/12546)
                 host = get_gnu_triplet(str(self.settings.os), str(self.settings.arch), "gcc")
