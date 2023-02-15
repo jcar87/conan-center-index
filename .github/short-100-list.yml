@@ -1,0 +1,14 @@
+---
+recipes:
+  - "zlib"
+  - "nlohmann_json"
+  - bzip2
+  - fmt
+  - gtest
+  - catch2
+  - libiconv
+  - rapidjson
+  - zstd
+  - sqlite3
+  - spdlog
+  - jwt-cpp
