@@ -11,7 +11,7 @@ from conan.cli.args import add_profiles_args
 from conan.cli.command import conan_command, OnceArgument
 from conan.cli.commands.test import run_test
 from conan.cli.printers.graph import print_graph_packages
-from conan.errors import ConanException
+from conan.errors import ConanException, ConanInvalidConfiguration
 
 from conan.tools.scm import Version
 # is this the correct API?
@@ -128,6 +128,10 @@ def create_top_versions(conan_api, parser, *args):
             try:
                 conan_api.install.install_binaries(deps_graph=deps_graph, remotes=[])
                 created.update({reference: False})
+            except ConanInvalidConfiguration:
+                out.warning(f"Invalid configuration for {reference}, skipping")
+                created.update({reference: False})
+                continue
             except Exception as e:
                 out.error(f"{reference} build failed with: {str(e)}")
                 failed.update({reference: str(e)})
