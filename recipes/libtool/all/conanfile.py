@@ -5,7 +5,7 @@ from conan.tools.files import apply_conandata_patches, export_conandata_patches,
 from conan.tools.gnu import Autotools, AutotoolsToolchain
 from conan.tools.layout import basic_layout
 from conan.tools.microsoft import is_msvc
-import conans.tools as tools_legacy
+# import conans.tools as tools_legacy
 
 import os
 import re
@@ -91,6 +91,8 @@ class LibtoolConan(ConanFile):
         if is_msvc(self):
             env.define("CC", "cl -nologo")
             env.define("CXX", "cl -nologo")
+            env.define("F77", "no")
+            env.define("FC", "no")
 
         tc.generate(env)
 
@@ -217,6 +219,6 @@ class LibtoolConan(ConanFile):
         self.output.info("Appending PATH env: {}".format(bin_path))
         self.env_info.PATH.append(bin_path)
         # TODO: use conan.tools.microsoft.unix_path_package_info_legacy() in Conan >=1.57
-        self.env_info.ACLOCAL_PATH.append(tools_legacy.unix_path(libtool_aclocal_dir))
-        self.env_info.AUTOMAKE_CONAN_INCLUDES.append(tools_legacy.unix_path(libtool_aclocal_dir))
+        # self.env_info.ACLOCAL_PATH.append(tools_legacy.unix_path(libtool_aclocal_dir))
+        # self.env_info.AUTOMAKE_CONAN_INCLUDES.append(tools_legacy.unix_path(libtool_aclocal_dir))
 
