@@ -1,5 +1,6 @@
 from conan import ConanFile
 from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir
+from conan.tools.env import VirtualBuildEnv
 from conan.tools.gnu import Autotools, AutotoolsToolchain
 from conan.tools.layout import basic_layout
 from conan.tools.microsoft import unix_path_package_info_legacy
@@ -49,6 +50,9 @@ class XorgMacrosConan(ConanFile):
             ["--datarootdir=${prefix}/bin/share"]
         )
         tc.generate()
+
+        buildenv = VirtualBuildEnv(self)
+        buildenv.generate()
 
     def build(self):
         apply_conandata_patches(self)
