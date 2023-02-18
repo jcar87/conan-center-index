@@ -63,9 +63,6 @@ class XorgProtoConan(ConanFile):
             env.define("CC", f"{compile_wrapper} cl -nologo")
         tc.generate(env)
 
-        autotools = Autotools(self)
-        autotools.configure()
-
     def build(self):
         apply_conandata_patches(self)
 
