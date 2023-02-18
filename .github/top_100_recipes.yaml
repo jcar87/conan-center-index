@@ -140,4 +140,4 @@ recipes:
   - libgettext
   - make
   - libmp3lame
-  
+  - xorg-cf-files
