@@ -4,7 +4,7 @@ import yaml
 from conan.api.output import ConanOutput
 from conan.errors import ConanException
 
-def parse_list_from_args(args) -> list[str]:
+def parse_list_from_args(args):
     out = ConanOutput()
 
     recipes_to_export = []

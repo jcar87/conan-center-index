@@ -136,3 +136,8 @@ recipes:
   - mpg123
   - msys2
   - strawberryperl
+  - xorg-macros
+  - libgettext
+  - make
+  - libmp3lame
+  
