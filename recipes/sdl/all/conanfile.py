@@ -148,7 +148,7 @@ class SDLConan(ConanFile):
             if self.options.opengl:
                 self.requires("opengl/system")
             if self.options.nas:
-                self.requires("nas/1.9.4")
+                self.requires("nas/1.9.5")
             if self.options.wayland:
                 self.requires("wayland/1.21.0")
                 self.requires("xkbcommon/1.4.1")
@@ -185,7 +185,7 @@ class SDLConan(ConanFile):
             # set. This could be because you are using a Mac OS X version less than 10.5
             # or because CMake's platform configuration is corrupt.
             # FIXME: Remove once CMake on macOS/M1 CI runners is upgraded.
-            self.build_requires("cmake/3.22.0")
+            self.build_requires("cmake/3.25.1")
         if self.settings.os == "Linux":
             self.build_requires("pkgconf/1.7.4")
         if hasattr(self, "settings_build") and self.options.get_safe("wayland"):
