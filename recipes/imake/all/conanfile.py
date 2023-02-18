@@ -111,8 +111,8 @@ class ImakeConan(ConanFile):
             env.define("CC", compile_wrapper)
             env.define("CXX", compile_wrapper)
             env.define("CPP", compile_wrapper)
-            xorg-proto-include = unix_path(self, self.dependencies['xorg-proto'].aggregated_components().cpp_info.includedirs[0])
-            env.append("CPPFLAGS", F"-I{xorg-proto-include}")
+            xorg_proto_include = unix_path(self, self.dependencies['xorg-proto'].aggregated_components().cpp_info.includedirs[0])
+            env.append("CPPFLAGS", F"-I{xorg_proto_include}")
         tc.generate(env)
 
         pkgconf = PkgConfigDeps(self)
