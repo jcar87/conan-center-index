@@ -1,7 +1,7 @@
 from conan import ConanFile
 from conan.tools.env import VirtualBuildEnv
 from conan.tools.files import get, copy, rmdir, export_conandata_patches, apply_conandata_patches
-from conan.tools.gnu import Autotools, AutotoolsToolchain, AutotoolsDeps, PkgConfigDeps
+from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps
 from conan.tools.layout import basic_layout
 from conan.tools.microsoft import is_msvc, unix_path, check_min_vs
 import os
@@ -111,13 +111,12 @@ class ImakeConan(ConanFile):
             env.define("CC", compile_wrapper)
             env.define("CXX", compile_wrapper)
             env.define("CPP", compile_wrapper)
+            xorg-proto-include = unix_path(self, self.dependencies['xorg-proto'].aggregated_components().cpp_info.includedirs[0])
+            env.append("CPPFLAGS", F"-I{xorg-proto-include}")
         tc.generate(env)
 
         pkgconf = PkgConfigDeps(self)
         pkgconf.generate()
-
-        deps = AutotoolsDeps(self)
-        deps.generate()
 
     def build(self):
         apply_conandata_patches(self)
