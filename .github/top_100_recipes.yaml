@@ -141,3 +141,4 @@ recipes:
   - make
   - libmp3lame
   - xorg-cf-files
+  - yasm
