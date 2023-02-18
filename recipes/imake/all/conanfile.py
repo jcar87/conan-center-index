@@ -110,7 +110,7 @@ class ImakeConan(ConanFile):
             compile_wrapper = f"{unix_path(self, self.conf.get('user.automake:compile-wrapper'))} cl -nologo"
             env.define("CC", compile_wrapper)
             env.define("CXX", compile_wrapper)
-            env.define("CPP", compile_wrapper)
+            env.define("CPP", f"{compile_wrapper} -E")
             xorg_proto_include = unix_path(self, self.dependencies['xorg-proto'].cpp_info.aggregated_components().includedirs[0])
             env.append("CFLAGS", f"-I{xorg_proto_include}")
         tc.generate(env)
