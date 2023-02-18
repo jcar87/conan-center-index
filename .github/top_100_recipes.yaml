@@ -142,3 +142,6 @@ recipes:
   - libmp3lame
   - xorg-cf-files
   - yasm
+  - xorg-makedepend
+  - xorg-gccmakedep
+
