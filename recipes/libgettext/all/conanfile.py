@@ -37,7 +37,7 @@ class GetTextConan(ConanFile):
     default_options = {
         "shared": False,
         "fPIC": True,
-        "threads": "auto",
+        # "threads": "auto",
     }
 
     @property
@@ -62,7 +62,10 @@ class GetTextConan(ConanFile):
         self.settings.rm_safe("compiler.libcxx")
         self.settings.rm_safe("compiler.cppstd")
 
-        if (self.options.threads == "auto"):
+        self.output.warning(f"What value does the option have: {self.options.threads}")
+
+        if not self.options.threads or self.options.threads == "auto":
+        # if (self.options.threads == "auto"):
             self.options.threads = {"Solaris": "solaris", "Windows": "windows"}.get(str(self.settings.os), "posix")
 
     def layout(self):
