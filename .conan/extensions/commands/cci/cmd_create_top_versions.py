@@ -21,15 +21,21 @@ from .cci_list_or_name import parse_list_from_args
 
 def output_json(results):    print(json.dumps({
         "created": [repr(r) for r in results["created"]],
-        "failures": [f for f in results["failures"]]
+        "failures": [f for f in results["failures"]], 
+        "invalid": [f for f in results["invalid"]]
+
     }))
 
 def output_markdown(results):
     failures = results["failures"]
+    invalid = results["invalid"]
     print(textwrap.dedent(f"""
     ### Conan Build and Test Results
 
-    Successfully built {len(results["created"])} packages while encountering {len(failures)} recipes that could not be built; these are
+    Successfully built {len(results["created"])} packages,  while encountering {len(invalid)} that were not built
+    due to invalid configurations.
+
+    There were {len(failures)} recipes that could not be built, these are:
 
 
     <table>
@@ -55,6 +61,31 @@ def output_markdown(results):
 
     print("</table>")
 
+    print(textwrap.dedent(f"""
+    <table>
+    <th>
+    <td> Package </td> <td> Reason </td>
+    </th>"""))
+
+
+    for key, value in invalid.items():
+        print(textwrap.dedent(f"""
+            <tr>
+            <td> {key} </td>
+            <td>
+
+            ```txt
+            """))
+        print(f"{value}")
+        print(textwrap.dedent(f"""
+            ```
+
+            </td>
+            </tr>
+            """))
+        print("</table>")
+
+
 
 @conan_command(group="Conan Center Index", formatters={"json": output_json, "md": output_markdown})
 def create_top_versions(conan_api, parser, *args):
@@ -72,6 +103,7 @@ def create_top_versions(conan_api, parser, *args):
 
     created = {}
     failed = {}
+    failed_invalid = {}
 
     profile_host, profile_build = conan_api.profiles.get_profiles_from_args(args)
     out.title("Input profiles")
@@ -128,9 +160,9 @@ def create_top_versions(conan_api, parser, *args):
             try:
                 conan_api.install.install_binaries(deps_graph=deps_graph, remotes=[])
                 created.update({reference: False})
-            except ConanInvalidConfiguration:
+            except ConanInvalidConfiguration as e:
                 out.warning(f"Invalid configuration for {reference}, skipping")
-                created.update({reference: False})
+                failed_invalid.update({reference: str(e)})
                 continue
             except Exception as e:
                 out.error(f"{reference} build failed with: {str(e)}")
@@ -158,5 +190,9 @@ def create_top_versions(conan_api, parser, *args):
     for item in failed:
         out.info(f"{item}")
 
-    return {"created": created, "failures": failed}
+    out.title("Failed due to invalid configuration")
+    for item in failed_invalid:
+        out.info(f"{item}")
+
+    return {"created": created, "failures": failed, "invalid": failed_invalid}
 
