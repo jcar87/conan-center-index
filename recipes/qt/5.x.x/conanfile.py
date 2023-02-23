@@ -301,6 +301,18 @@ class QtConan(ConanFile):
             if self.options.get_safe(module):
                 _enablemodule(module)
 
+        if not self.options.device:
+            self.options.rm_safe("device")
+
+        if not self.options.cross_compile:
+            self.options.rm_safe("cross_compile")
+
+        if not self.options.config:
+            self.options.rm_safe("config")
+
+        if not self.options.sysroot:
+            self.options.rm_safe("sysroot")
+
     def validate(self):
         if self.settings.compiler.get_safe("cppstd"):
             check_min_cppstd(self, "11")
@@ -394,7 +406,7 @@ class QtConan(ConanFile):
             self.requires("libpng/1.6.39")
         if self.options.with_sqlite3 and not self.options.multiconfiguration:
             self.requires("sqlite3/3.39.4")
-            self.options["sqlite3"].enable_column_metadata = True
+            #self.options["sqlite3"].enable_column_metadata = True
         if self.options.get_safe("with_mysql", False):
             self.requires("libmysqlclient/8.0.30")
         if self.options.with_pq:
@@ -742,7 +754,7 @@ class QtConan(ConanFile):
         if self.options.sysroot:
             args += [f"-sysroot {self.options.sysroot}"]
 
-        if self.options.device:
+        if self.options.get_safe("device"):
             args += [f"-device {self.options.device}"]
         else:
             xplatform_val = self._xplatform()
@@ -938,9 +950,9 @@ Examples = bin/datadir/examples""")
             _create_private_module("Qml", ["CorePrivate", "Qml"])
 
     def package_id(self):
-        del self.info.options.cross_compile
-        del self.info.options.sysroot
-        if self.options.multiconfiguration and is_msvc(self):
+        # del self.info.options.cross_compile
+        # del self.info.options.sysroot
+        if self.info.options.multiconfiguration and is_msvc(self):
             if self.settings.compiler == "Visual Studio":
                 if "MD" in self.settings.compiler.runtime:
                     self.info.settings.compiler.runtime = "MD/MDd"
