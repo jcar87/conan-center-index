@@ -1,10 +1,11 @@
 sources:
   "5.15.8":
     url:
-      - "https://download.qt.io/archive/qt/5.15/5.15.8/single/qt-everywhere-opensource-src-5.15.8.tar.xz"
-      - "https://qt-mirror.dannhauer.de/archive/qt/5.15/5.15.8/single/qt-everywhere-opensource-src-5.15.8.tar.xz"
-      - "https://www.funet.fi/pub/mirrors/download.qt-project.org/archive/qt/5.15/5.15.8/single/qt-everywhere-opensource-src-5.15.8.tar.xz"
-      - "https://ftp.fau.de/qtproject/archive/qt/5.15/5.15.8/single/qt-everywhere-opensource-src-5.15.8.tar.xz"
+      - "file:///Users/luisc/dev/tmp/qt/qt-everywhere-opensource-src-5.15.8.tar.xz"
+      # - "https://download.qt.io/archive/qt/5.15/5.15.8/single/qt-everywhere-opensource-src-5.15.8.tar.xz"
+      # - "https://qt-mirror.dannhauer.de/archive/qt/5.15/5.15.8/single/qt-everywhere-opensource-src-5.15.8.tar.xz"
+      # - "https://www.funet.fi/pub/mirrors/download.qt-project.org/archive/qt/5.15/5.15.8/single/qt-everywhere-opensource-src-5.15.8.tar.xz"
+      # - "https://ftp.fau.de/qtproject/archive/qt/5.15/5.15.8/single/qt-everywhere-opensource-src-5.15.8.tar.xz"
     sha256: "776a9302c336671f9406a53bd30b8e36f825742b2ec44a57c08217bff0fa86b9"
   "5.15.7":
     url:

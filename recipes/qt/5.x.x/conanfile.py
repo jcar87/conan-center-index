@@ -4,6 +4,7 @@ from conan.tools.apple import is_apple_os
 from conan.tools.build import build_jobs, check_min_cppstd, cross_building
 from conan.tools.env import Environment, VirtualRunEnv, VirtualBuildEnv
 from conan.tools.files import chdir, copy, get, load, replace_in_file, rm, rmdir, save, export_conandata_patches, apply_conandata_patches
+from conan.tools.gnu import PkgConfigDeps
 from conan.tools.microsoft import msvc_runtime_flag, is_msvc, VCVars
 from conan.tools.scm import Version
 
@@ -143,7 +144,7 @@ class QtConan(ConanFile):
 
     no_copy_source = True
     short_paths = True
-    generators = "pkg_config"
+    # generators = "pkg_config"
 
     @property
     def _settings_build(self):
@@ -356,7 +357,7 @@ class QtConan(ConanFile):
             if Version(self.settings.compiler.version) < "5.0":
                 raise ConanInvalidConfiguration("qt 5.15.X does not support GCC or clang before 5.0")
 
-        if self.options.get_safe("with_pulseaudio", default=False) and not self.options["pulseaudio"].with_glib:
+        if self.options.get_safe("with_pulseaudio", default=False) and not self.dependencies["pulseaudio"].options.with_glib:
             # https://bugreports.qt.io/browse/QTBUG-95952
             raise ConanInvalidConfiguration("Pulseaudio needs to be built with glib option or qt's configure script won't detect it")
 
@@ -452,7 +453,7 @@ class QtConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version],
-            strip_root=True, destination="qt5")
+            strip_root=True, destination="qt5", verify=False)
 
         apply_conandata_patches(self)
         for f in ["renderer", os.path.join("renderer", "core"), os.path.join("renderer", "platform")]:
@@ -577,7 +578,7 @@ class QtConan(ConanFile):
         env = Environment()
         env.define("MYVAR1", "MyValue1")
         env.define("MAKEFLAGS", f"j{build_jobs(self)}")
-        env.prepend_path("PKG_CONFIG_PATH", self.build_folder)
+        # env.prepend_path("PKG_CONFIG_PATH", self.build_folder)
 
         if is_msvc(self):
             ms = VCVars(self)
@@ -585,6 +586,9 @@ class QtConan(ConanFile):
             env.prepend_path("PATH", os.path.join(self.source_folder, "qt5", "gnuwin32", "bin"))
 
         env.vars(self, scope="build").save_script("conanbuild_qt")
+
+        deps = PkgConfigDeps(self)
+        deps.generate()
             
 
 
@@ -650,7 +654,7 @@ class QtConan(ConanFile):
         if not self.options.openssl:
             args += ["-no-openssl"]
         else:
-            if self.options["openssl"].shared:
+            if self.dependencies["openssl"].options.shared:
                 args += ["-openssl-runtime"]
             else:
                 args += ["-openssl-linked"]
@@ -717,24 +721,26 @@ class QtConan(ConanFile):
                   ("libalsa", "ALSA"),
                   ("xkbcommon", "XKBCOMMON"),
                   ("md4c", "LIBMD4C")]
+        host_deps = [dep.ref.name for _, dep in self.dependencies.host.items()]
         for package, var in libmap:
-            if package in self.deps_cpp_info.deps:
+            
+            if package in host_deps:
                 if package == "freetype":
-                    args.append("\"%s_INCDIR=%s\"" % (var, self.deps_cpp_info[package].include_paths[-1]))
+                    args.append("\"%s_INCDIR=%s\"" % (var, self.dependencies[package].cpp_info.aggregated_components().includedirs[-1]))
 
                 args.append("\"%s_LIBS=%s\"" % (var, " ".join(self._gather_libs(package))))
 
-        for package in self.deps_cpp_info.deps:
-            args += [f"-I \"{s}\"" for s in self.deps_cpp_info[package].include_paths]
-            args += [f"-D {s}" for s in self.deps_cpp_info[package].defines]
-        args.append("QMAKE_LIBDIR+=\"%s\"" % " ".join(l for package in self.deps_cpp_info.deps for l in self.deps_cpp_info[package].lib_paths))
+        for package in host_deps:
+            args += [f"-I \"{s}\"" for s in self.dependencies[package].cpp_info.aggregated_components().includedirs]
+            args += [f"-D {s}" for s in self.dependencies[package].cpp_info.aggregated_components().defines]
+        args.append("QMAKE_LIBDIR+=\"%s\"" % " ".join(l for package in host_deps for l in self.dependencies[package].cpp_info.aggregated_components().libdirs))
         if not is_msvc(self):
-            args.append("QMAKE_RPATHLINKDIR+=\"%s\"" % ":".join(l for package in self.deps_cpp_info.deps for l in self.deps_cpp_info[package].lib_paths))
+            args.append("QMAKE_RPATHLINKDIR+=\"%s\"" % ":".join(l for package in host_deps for l in self.dependencies[package].cpp_info.aggregated_components().libdirs))
 
-        if "libmysqlclient" in self.deps_cpp_info.deps:
-            args.append("-mysql_config \"%s\"" % os.path.join(self.deps_cpp_info["libmysqlclient"].rootpath, "bin", "mysql_config"))
-        if "libpq" in self.deps_cpp_info.deps:
-            args.append("-psql_config \"%s\"" % os.path.join(self.deps_cpp_info["libpq"].rootpath, "bin", "pg_config"))
+        if "libmysqlclient" in host_deps:
+            args.append("-mysql_config \"%s\"" % os.path.join(self.dependencies["libmysqlclient"].package_folder, "bin", "mysql_config"))
+        if "libpq" in host_deps:
+            args.append("-psql_config \"%s\"" % os.path.join(self.dependencies["libpq"].package_folder, "bin", "pg_config"))
         if self.settings.os == "Macos":
             args += ["-no-framework"]
             if self.settings.arch == "armv8":
@@ -751,7 +757,7 @@ class QtConan(ConanFile):
         elif self.settings.get_safe("compiler.libcxx") == "libstdc++11":
             args += ["-D_GLIBCXX_USE_CXX11_ABI=1"]
 
-        if self.options.sysroot:
+        if self.options.get_safe("sysroot"):
             args += [f"-sysroot {self.options.sysroot}"]
 
         if self.options.get_safe("device"):
@@ -767,7 +773,7 @@ class QtConan(ConanFile):
                 self.output.warn("host not supported: %s %s %s %s" %
                                  (self.settings.os, self.settings.compiler,
                                   self.settings.compiler.version, self.settings.arch))
-        if self.options.cross_compile:
+        if self.options.get_safe("cross_compile"):
             args += [f"-device-option CROSS_COMPILE={self.options.cross_compile}"]
 
         def _getenvpath(var):
@@ -798,7 +804,7 @@ class QtConan(ConanFile):
                      "-system-webengine-opus",
                      "-webengine-jumbo-build 0"]
 
-        if self.options.config:
+        if self.options.get_safe("config"):
             args.append(str(self.options.config))
 
         os.mkdir("build_folder")
@@ -1510,12 +1516,14 @@ Examples = bin/datadir/examples""")
             yield element
 
     def _gather_libs(self, p):
-        if p not in self.deps_cpp_info.deps:
+        host_deps = [dep.ref.name for _, dep in self.dependencies.host.items()]
+        if p not in host_deps:
             return []
-        libs = ["-l" + i for i in self.deps_cpp_info[p].libs + self.deps_cpp_info[p].system_libs]
+        dependency_cppinfo = self.dependencies[p].cpp_info.aggregated_components()
+        libs = ["-l" + i for i in dependency_cppinfo.libs + dependency_cppinfo.system_libs]
         if is_apple_os(self):
-            libs += ["-framework " + i for i in self.deps_cpp_info[p].frameworks]
-        libs += self.deps_cpp_info[p].sharedlinkflags
-        for dep in self.deps_cpp_info[p].public_deps:
-            libs += self._gather_libs(dep)
+            libs += ["-framework " + i for i in dependency_cppinfo.frameworks]
+        libs += dependency_cppinfo.sharedlinkflags
+        # for dep in self.dependencies[p].dependencies:
+        #     libs += self._gather_libs(dep)
         return self._remove_duplicate(libs)
