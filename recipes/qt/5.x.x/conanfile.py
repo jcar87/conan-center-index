@@ -2,13 +2,14 @@ from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os
 from conan.tools.build import build_jobs, check_min_cppstd, cross_building
+from conan.tools.env import Environment, VirtualRunEnv, VirtualBuildEnv
 from conan.tools.files import chdir, copy, get, load, replace_in_file, rm, rmdir, save, export_conandata_patches, apply_conandata_patches
-from conan.tools.microsoft import msvc_runtime_flag, is_msvc
+from conan.tools.microsoft import msvc_runtime_flag, is_msvc, VCVars
 from conan.tools.scm import Version
-from conans import tools, RunEnvironment
-from conans.model import Generator
+
 import configparser
 import glob
+import io
 import itertools
 import os
 import textwrap
@@ -16,26 +17,26 @@ import textwrap
 required_conan_version = ">=1.52.0"
 
 
-class qt(Generator):
-    @property
-    def filename(self):
-        return "qt.conf"
+# class qt(Generator):
+#     @property
+#     def filename(self):
+#         return "qt.conf"
 
-    @property
-    def content(self):
-        return """[Paths]
-Prefix = %s
-ArchData = bin/archdatadir
-HostData = bin/archdatadir
-Data = bin/datadir
-Sysconf = bin/sysconfdir
-LibraryExecutables = bin/archdatadir/bin
-Plugins = bin/archdatadir/plugins
-Imports = bin/archdatadir/imports
-Qml2Imports = bin/archdatadir/qml
-Translations = bin/datadir/translations
-Documentation = bin/datadir/doc
-Examples = bin/datadir/examples""" % self.conanfile.deps_cpp_info["qt"].rootpath.replace("\\", "/")
+#     @property
+#     def content(self):
+#         return """[Paths]
+# Prefix = %s
+# ArchData = bin/archdatadir
+# HostData = bin/archdatadir
+# Data = bin/datadir
+# Sysconf = bin/sysconfdir
+# LibraryExecutables = bin/archdatadir/bin
+# Plugins = bin/archdatadir/plugins
+# Imports = bin/archdatadir/imports
+# Qml2Imports = bin/archdatadir/qml
+# Translations = bin/datadir/translations
+# Documentation = bin/datadir/doc
+# Examples = bin/datadir/examples""" % self.conanfile.deps_cpp_info["qt"].rootpath.replace("\\", "/")
 
 
 class QtConan(ConanFile):
@@ -170,21 +171,21 @@ class QtConan(ConanFile):
 
             # Check if a valid python2 is available in PATH or it will failflex
             # Start by checking if python2 can be found
-            python_exe = tools.which("python2")
-            if not python_exe:
-                # Fall back on regular python
-                python_exe = tools.which("python")
-
-            if not python_exe:
+            has_python2 = self.run("python2 --version", ignore_errors=True) == 0
+            if not has_python2:
+                has_python = self.run("python --version", ignore_errors=True) == 0
+           
+            if not has_python2 and not has_python:
                 msg = ("Python2 must be available in PATH "
                        "in order to build Qt WebEngine")
                 raise ConanInvalidConfiguration(msg)
+            else:
+                python_exe = "python2" if has_python2 else "python"
 
             # In any case, check its actual version for compatibility
-            from six import StringIO  # Python 2 and 3 compatible
-            mybuf = StringIO()
+            mybuf = io.StringIO()
             cmd_v = f"\"{python_exe}\" --version"
-            self.run(cmd_v, output=mybuf)
+            self.run(cmd_v, mybuf)
             verstr = mybuf.getvalue().strip().split("Python ")[1]
             if verstr.endswith("+"):
                 verstr = verstr[:-1]
@@ -241,31 +242,31 @@ class QtConan(ConanFile):
         #         self.options.with_libiconv = False # QTBUG-84708
 
         if not self.options.gui:
-            del self.options.opengl
-            del self.options.with_vulkan
-            del self.options.with_freetype
-            del self.options.with_fontconfig
-            del self.options.with_harfbuzz
-            del self.options.with_libjpeg
-            del self.options.with_libpng
-            del self.options.with_md4c
-            del self.options.with_x11
+            self.options.rm_safe("opengl")
+            self.options.rm_safe("with_vulkan")
+            self.options.rm_safe("with_freetype")
+            self.options.rm_safe("with_fontconfig")
+            self.options.rm_safe("with_harfbuzz")
+            self.options.rm_safe("with_libjpeg")
+            self.options.rm_safe("with_libpng")
+            self.options.rm_safe("with_md4c")
+            self.options.rm_safe("with_x11")
 
         if not self.options.with_dbus:
-            del self.options.with_atspi
+            self.options.rm_safe("with_atspi")
 
         if not self.options.qtmultimedia:
-            del self.options.with_libalsa
-            del self.options.with_openal
-            del self.options.with_gstreamer
-            del self.options.with_pulseaudio
+            self.options.rm_safe("with_libalsa")
+            self.options.rm_safe("with_openal")
+            self.options.rm_safe("with_gstreamer")
+            self.options.rm_safe("with_pulseaudio")
 
         if self.settings.os in ("FreeBSD", "Linux"):
             if self.options.qtwebengine:
                 self.options.with_fontconfig = True
 
         if self.options.multiconfiguration:
-            del self.settings.build_type
+            self.settings.rm_safe("build_type")
 
         config = configparser.ConfigParser()
         config.read(os.path.join(self.recipe_folder, f"qtmodules{self.version}.conf"))
@@ -363,7 +364,7 @@ class QtConan(ConanFile):
     def requirements(self):
         self.requires("zlib/1.2.13")
         if self.options.openssl:
-            self.requires("openssl/1.1.1s")
+            self.requires("openssl/1.1.1t")
         if self.options.with_pcre2:
             self.requires("pcre2/10.40")
         if self.options.get_safe("with_vulkan"):
@@ -411,7 +412,7 @@ class QtConan(ConanFile):
         if self.options.get_safe("opengl", "no") != "no":
             self.requires("opengl/system")
         if self.options.with_zstd:
-            self.requires("zstd/1.5.2")
+            self.requires("zstd/1.5.4")
         if self.options.qtwebengine and self.settings.os in ["Linux", "FreeBSD"]:
             self.requires("expat/2.4.9")
             self.requires("opus/1.3.1")
@@ -558,6 +559,22 @@ class QtConan(ConanFile):
             return "wasm-emscripten"
 
         return None
+
+    def generate(self):
+
+        env = Environment()
+        env.define("MYVAR1", "MyValue1")
+        env.define("MAKEFLAGS", f"j{build_jobs(self)}")
+        env.prepend_path("PKG_CONFIG_PATH", self.build_folder)
+
+        if is_msvc(self):
+            ms = VCVars(self)
+            ms.generate()
+            env.prepend_path("PATH", os.path.join(self.source_folder, "qt5", "gnuwin32", "bin"))
+
+        env.vars(self, scope="build").save_script("conanbuild_qt")
+            
+
 
     def build(self):
         args = ["-confirm-license", "-silent", "-nomake examples", "-nomake tests",
@@ -774,24 +791,17 @@ class QtConan(ConanFile):
 
         os.mkdir("build_folder")
         with chdir(self, "build_folder"):
-            with tools.vcvars(self) if is_msvc(self) else tools.no_op():
-                build_env = {"MAKEFLAGS": f"j{build_jobs(self)}", "PKG_CONFIG_PATH": [self.build_folder]}
-                if self.settings.os == "Windows":
-                    build_env["PATH"] = [os.path.join(self.source_folder, "qt5", "gnuwin32", "bin")]
+            if self._settings_build.os == "Macos":
+                save(self, ".qmake.stash" , "")
+                save(self, ".qmake.super" , "")
 
-                with tools.environment_append(build_env):
-
-                    if self._settings_build.os == "Macos":
-                        save(self, ".qmake.stash" , "")
-                        save(self, ".qmake.super" , "")
-
-                    self.run("%s %s" % (os.path.join(self.source_folder, "qt5", "configure"), " ".join(args)), run_environment=True)
-                    if self._settings_build.os == "Macos":
-                        save(self, "bash_env", 'export DYLD_LIBRARY_PATH="%s"' % ":".join(RunEnvironment(self).vars["DYLD_LIBRARY_PATH"]))
-                    with tools.environment_append({
-                        "BASH_ENV": os.path.abspath("bash_env")
-                    }) if self._settings_build.os == "Macos" else tools.no_op():
-                        self.run(self._make_program(), run_environment=True)
+            self.run("%s %s" % (os.path.join(self.source_folder, "qt5", "configure"), " ".join(args)), env="conanbuild")
+            # if self._settings_build.os == "Macos":
+            #     save(self, "bash_env", 'export DYLD_LIBRARY_PATH="%s"' % ":".join(RunEnvironment(self).vars["DYLD_LIBRARY_PATH"]))
+            # with tools.environment_append({
+            #     "BASH_ENV": os.path.abspath("bash_env")
+            # }) if self._settings_build.os == "Macos" else tools.no_op():
+            self.run(self._make_program(), env="conanbuild")
 
     @property
     def _cmake_core_extras_file(self):
