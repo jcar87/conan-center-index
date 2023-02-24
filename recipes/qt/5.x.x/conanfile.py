@@ -1524,6 +1524,7 @@ Examples = bin/datadir/examples""")
         if is_apple_os(self):
             libs += ["-framework " + i for i in dependency_cppinfo.frameworks]
         libs += dependency_cppinfo.sharedlinkflags
-        # for dep in self.dependencies[p].dependencies:
-        #     libs += self._gather_libs(dep)
+        transitive_deps = [dep.ref.name for _, dep in self.dependencies[p].dependencies.host.items()]
+        for dep in transitive_deps:
+            libs += self._gather_libs(dep)
         return self._remove_duplicate(libs)
