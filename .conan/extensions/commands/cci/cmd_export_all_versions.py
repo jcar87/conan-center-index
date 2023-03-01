@@ -67,6 +67,7 @@ def export_all_versions(conan_api, parser, *args):
     # Result output variables, these should always be returned
     exported = {}
     exported_refs = []
+    exported_with_revision = []
     failed = dict()
 
     for item in recipes_to_export:
@@ -96,11 +97,13 @@ def export_all_versions(conan_api, parser, *args):
                 try:
                     ref = conan_api.export.export(os.path.abspath(conanfile), recipe_name, version, None, None)
                     out.verbose(f"Exported {ref}")
-                    
+
                     if recipe_name not in exported:
                         exported[recipe_name] = []
                     exported[recipe_name].append(ref)
                     exported_refs.append(ref)
+                    
+                    exported_with_revision.append(f"{ref[0].name}/{ref[0].version}#{ref[0].revision}")
                 except Exception as e:
                     failed.update({f"{recipe_name}/{recipe_subfolder}": str(e)})
 
@@ -109,8 +112,14 @@ def export_all_versions(conan_api, parser, *args):
         out.info(f"{item}: exported {len(exported[item])} versions")
 
     out.title("FAILED TO EXPORT")
-    for item in failed.items():
-        out.info(f"{item[0]}")
+    for key, value in failed.items():
+        out.info(f"{key}, {value}")
+
+    out.title("RECIPE REFERENCES")
+    for item in exported_with_revision:
+        out.info(f"{item}")
+
+    out.title("REFERENCE LIST")
 
     versions_list = [f"{item[1]}" for item in exported_refs]
     out.info(f'{versions_list}')

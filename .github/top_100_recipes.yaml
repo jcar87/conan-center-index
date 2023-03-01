@@ -1,0 +1,147 @@
+---
+recipes:
+  - zlib
+  - openssl:
+     - folders: ["3.x.x", "1.x.x"]
+  - b2: # Needed by boost
+     - folders: ["portable"]
+  - bzip2 # Needed by boost
+  - libbacktrace # Needed by boost
+  - boost
+  - nlohmann_json
+  - bzip2
+  - fmt
+  - gtest
+  - eigen
+  - catch2:
+     - folders: ["3.x.x"]
+  - libiconv
+  - rapidjson
+  - zstd
+  - sqlite3
+  - libbacktrace
+  - spdlog
+  - pkgconf
+  - libjpeg
+  - xz_utils
+  - expat
+  - m4
+  - libpng
+  - libwebp
+  - opengl
+  - cli11
+  - libcurl
+  - autoconf
+  - protobuf
+  - automake
+  - c-ares
+  - jbig
+  - libuuid
+  - xorg
+  - libtool
+  - ninja
+  - ms-gsl
+  - libpq
+  - cpp-httplib
+  - libxml2
+  - pybind11
+  - brotli
+  - abseil
+  - freetype
+  - libffi
+  - pcre
+  - libdeflate
+  - wayland
+  - googleapis
+  - grpc-proto
+  - grpc
+  - pcre2
+  - yaml-cpp
+  - asio
+  - meson # Needed by wayland-protocols to build
+  - wayland-protocols
+  - opus
+  - gnu-config
+  - libtiff
+  - re2
+  - meson
+  - poco
+  - xkbcommon
+  - ogg
+  - jasper
+  - jsoncpp
+  - glm
+  - libuv
+  - libsodium
+  - lz4
+  - range-v3
+  - vorbis
+  - flex
+  - benchmark
+  - fontconfig:
+      - folders: ["meson"]
+  - openjpeg
+  - openexr:
+      - folders: ["3.x"]
+  - aws-c-common
+  - md4c
+  - magic_enum
+  - cppcodec
+  - glfw
+  - openh264
+  - cyrus-sasl
+  - bison
+  - zulu-openjdk
+  - cmake
+  - glib
+  - libunwind
+  - libjpeg-turbo
+  - ghc-filesystem
+  - nanoflann
+  - glu
+  - stb
+  - nasm
+  - libmysqlclient
+  - cxxopts
+  - odbc
+  - libcap
+  - mbedtls
+  - cereal
+  - cryptopp
+  - civetweb
+  - sdl
+  - xtl
+  - xtensor
+  - minizip
+  - icu
+  - libalsa
+  - jwt-cpp
+# the following are needed by some of the above:
+  - xkeyboard-config
+  - imath
+  - libelf
+  - xsimd
+  - libbacktrace
+  - picojson
+  - libmount
+  - gperf
+  - libselinux
+  - pulseaudio
+  - flac
+  - libsndfile
+  - gettext
+  - nas
+  - imake
+  - xorg-proto
+  - mpg123
+  - msys2
+  - strawberryperl
+  - xorg-macros
+  - libgettext
+  - make
+  - libmp3lame
+  - xorg-cf-files
+  - yasm
+  - xorg-makedepend
+  - xorg-gccmakedep
+
