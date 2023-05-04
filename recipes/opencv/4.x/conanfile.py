@@ -372,7 +372,7 @@ class OpenCVConan(ConanFile):
             tc.variables["OPENCV_INSTALL_FFMPEG_DOWNLOAD_SCRIPT"] = False
             tc.variables["FFMPEG_LIBRARIES"] = "ffmpeg::avcodec;ffmpeg::avformat;ffmpeg::avutil;ffmpeg::swscale"
             ffmpeg_cpp_info = self.dependencies["ffmpeg"].cpp_info
-            for component in ["avcodec", "avformat", "avutil", "swscale", "avresample"]:
+            for component in ["avcodec", "avformat", "avutil", "swscale"]:
                 ffmpeg_component_version = ffmpeg_cpp_info.components[component].get_property("component_version")
                 tc.variables[f"FFMPEG_lib{component}_VERSION"] = ffmpeg_component_version
 
