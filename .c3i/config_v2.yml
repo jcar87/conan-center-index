@@ -101,11 +101,14 @@ configurations:
         arch: [ "x86_64" ]
         compiler:
           - "msvc":
-              compiler.version: [ "192" ]
+              compiler.version: [ "192", "193" ]
               build_type:
                 - "Release":
                     compiler.runtime: ["dynamic"]
                     compiler.runtime_type: [ "Release" ]
+                - "Debug":
+                    compiler.runtime: ["dynamic"]
+                    compiler.runtime_type: [ "Debug" ]
 
 cppstd:
   apple-clang:
