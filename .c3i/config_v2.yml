@@ -115,6 +115,7 @@ cppstd:
     "11": ["17", "gnu17", "20", "gnu20"]
   msvc:
     "192": ["14", "17", "20"]
+    "193": ["14", "17", "20"]
 
 jenkins:
   url: "http://mb-jenkins-my-bloody-jenkins:8080"
