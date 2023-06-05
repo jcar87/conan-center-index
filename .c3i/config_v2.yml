@@ -49,46 +49,6 @@ tasks:
     report_issue_append: false
 
 configurations:
-  - id: linux-gcc
-    epochs: [0, 20211221, 20220120, 20220628]
-    hrname: "Linux, GCC"
-    build_profile:
-      os: "Linux"
-    content:
-      - os: ["Linux"]
-        arch: ["x86_64"]
-        compiler:
-          - "gcc":
-              compiler.libcxx: ["libstdc++11"]
-              compiler.version: ["11"]
-              build_type: ["Release"]
-  - id: macos-clang
-    epochs: [0, 20211221, 20220120, 20220628]
-    hrname: "macOS, Clang"
-    build_profile:
-      os: "Macos"
-    content:
-      - os: [ "Macos" ]
-        arch: [ "x86_64" ]
-        compiler:
-          - "apple-clang":
-              compiler.version: [ "13" ]
-              compiler.libcxx: [ "libc++" ]
-              build_type: [ "Release"]
-  - id: macos-m1-clang
-    epochs: [0, 20211221, 20220120, 20220628]
-    hrname: "macOS M1, Clang"
-    build_profile:
-      os: "Macos"
-      arch: "x86_64"
-    content:
-      - os: [ "Macos" ]
-        arch: [ "armv8" ]
-        compiler:
-          - "apple-clang":
-              compiler.version: ["13" ]
-              compiler.libcxx: [ "libc++" ]
-              build_type: [ "Release"]
   - id: windows-msvc
     epochs: [0, 20211221, 20220120, 20220628]
     hrname: "Windows, MSVC"
@@ -124,7 +84,7 @@ node_labels:
   Windows:
     x86_64:
       "msvc":
-        default: "windows20230531"
+        default: "windows20221212"
   Macos:
     x86_64:
       "apple-clang":
