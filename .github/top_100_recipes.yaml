@@ -680,3 +680,39 @@ recipes:
    - plutovg
    - watcher
    - yyjson
+   - tl-function-ref
+   - wasmer
+   - z3
+   - ragel
+   - libwebsockets
+   - 7zip
+   - cppitertools
+   - nanomsg
+   - lunasvg
+   - termcolor
+   - aws-c-cal
+   - glaze
+   - giflib
+   - fontconfig
+   - raylib
+   - turtle
+   - libmemcached
+   - aws-c-io
+   - fmtlog
+   - zpp_bits
+   - thrust
+   - ring-span-lite
+   - llhttp
+   - libmediainfo
+   - catch2
+   - id3v2lib
+   - tz
+   - timsort
+   - sbepp
+   - xlsxio
+   - mozilla-build
+   - b2:
+       - folders: ['portable']
+   - opencl-clhpp-headers
+   - bazel
+   - gegles-spdlog_setup
