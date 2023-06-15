@@ -50,7 +50,7 @@ tasks:
 
 configurations:
   - id: windows-msvc
-    epochs: [0, 20211221, 20220120, 20220628]
+    epochs: [20230606]
     hrname: "Windows, MSVC"
     build_profile:
       os: "Windows"
@@ -59,7 +59,7 @@ configurations:
         arch: [ "x86_64" ]
         compiler:
           - "msvc":
-              compiler.version: [ "192", "193" ]
+              compiler.version: [ "193" ]
               build_type:
                 - "Release":
                     compiler.runtime: ["dynamic"]
