@@ -66,9 +66,6 @@ configurations:
                 - "Release":
                     compiler.runtime: ["dynamic"]
                     compiler.runtime_type: [ "Release" ]
-                - "Debug":
-                    compiler.runtime: ["dynamic"]
-                    compiler.runtime_type: [ "Debug" ]
 
 cppstd:
   apple-clang:
