@@ -50,7 +50,7 @@ tasks:
 
 configurations:
   - id: windows-msvc
-    epochs: [20230606]
+    epochs: [20220120, 20230606]
     hrname: "Windows, MSVC"
     build_profile:
       os: "Windows"
