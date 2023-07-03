@@ -3,7 +3,7 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import fix_apple_shared_install_name
 from conan.tools.build import can_run
 from conan.tools.env import VirtualBuildEnv, VirtualRunEnv
-from conan.tools.files import copy, get, rmdir
+from conan.tools.files import copy, get, replace_in_file, rmdir
 from conan.tools.gnu import PkgConfigDeps
 from conan.tools.layout import basic_layout
 from conan.tools.meson import Meson, MesonToolchain
@@ -73,6 +73,10 @@ class LibsecretConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+
+        # Ensure .dll is installed on Windows
+        replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"),
+                        "TARGETS ${PROJECT_NAME}", "TARGETS ${PROJECT_NAME} RUNTIME lib")
 
     def generate(self):
         env = VirtualBuildEnv(self)
