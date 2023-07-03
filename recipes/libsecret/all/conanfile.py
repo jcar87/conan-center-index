@@ -76,7 +76,7 @@ class LibsecretConan(ConanFile):
 
         # Ensure .dll is installed on Windows
         replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"),
-                        "TARGETS ${PROJECT_NAME}", "TARGETS ${PROJECT_NAME} RUNTIME lib")
+                        "TARGETS ${PROJECT_NAME}", "TARGETS ${PROJECT_NAME} RUNTIME DESTINATION lib")
 
     def generate(self):
         env = VirtualBuildEnv(self)
