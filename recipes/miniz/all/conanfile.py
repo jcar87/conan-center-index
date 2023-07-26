@@ -25,7 +25,7 @@ class MinizConan(ConanFile):
         "shared": False,
         "fPIC": True,
     }
-
+#######
     def export_sources(self):
         export_conandata_patches(self)
 

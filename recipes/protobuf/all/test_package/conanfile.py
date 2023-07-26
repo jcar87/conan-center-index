@@ -15,17 +15,13 @@ class TestPackageConan(ConanFile):
 
     def requirements(self):
         self.requires(self.tested_reference_str)
+        self.requires("miniz/3.0.2")
 
-    def build_requirements(self):
-        if cross_building(self) and hasattr(self, "settings_build"):
-            self.tool_requires(self.tested_reference_str)
+    # def build_requirements(self):
+    #     self.tool_requires(self.tested_reference_str)
 
     def generate(self):
-        VirtualRunEnv(self).generate()
-        if cross_building(self) and hasattr(self, "settings_build"):
-            VirtualBuildEnv(self).generate()
-        else:
-            VirtualRunEnv(self).generate(scope="build")
+        VirtualBuildEnv(self).generate()
         tc = CMakeToolchain(self)
         tc.cache_variables["protobuf_LITE"] = self.dependencies[self.tested_reference_str].options.lite
         tc.generate()
