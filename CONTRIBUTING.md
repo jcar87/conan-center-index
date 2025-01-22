@@ -11,46 +11,32 @@ The following summarizes the process for contributing to the CCI (Conan Center I
 
 ## Community
 
-ConanCenterIndex is an Open Source MIT licensed project; it is developed by the Conan maintainers and a great community of contributors.
-
-## Dev-flow & Pull Requests
-
-CCI follows the ["GitFlow"](https://datasift.github.io/gitflow/IntroducingGitFlow.html) branching model.
-Issues are triaged and categorized mainly by type (package request, bug...) and priority (high, medium...) using GitHub
-labels.
-
-To contribute follow the next steps:
-
-1. Comment in the corresponding issue that you want to contribute the package/fix proposed. If there is no open issue, we strongly suggest
-   opening one to gather feedback.
-2. Make sure to [request access](docs/adding_packages/README.md#request-access) and be aware there is a [contributor licenses agreement](https://cla-assistant.io/conan-io/conan-center-index).
-3. Get setup by following the [Developing Recipes](docs/developing_recipes_locally.md) guide and learn the basic commands.
-4. Check the [How To Add Packages](docs/adding_packages/README.md) page for the break down of ConanCenterIndex specific conventions and practices.
-5. In your fork create a `package/xxx` branch from the `master` branch and develop
-   your fix/packages as discussed in previous step.
-6. [Submit a pull request](docs/adding_packages/README.md#submitting-a-package) once you are ready. This can be when you
-   got everything working or even if you need help. Add the text to the issue body (besides other comments): "fixes #IssueNumber"
-   in the body of the PR, referring to the issue of step 1.
-
-The Conan Community works hard to review all the pull requests and provide assistance where need.
-The [Review Process](docs/review_process.md) is partially automated with the help of @conan-center-index-bot :rocket:
+The `conan-center-index` repository is an Open Source MIT licensed project; it is developed by the Conan maintainers and a great community of contributors. The CI infrastructure is provided and maintained by the Conan team at JFrog.
 
 ## Issues
 
-If you think you found a bug in CCI or in a recipe, open an issue indicating the following:
+If you experience issues when consuming recipes from Conan Center, you are encouraged to report them in our [issue tracker](https://github.com/conan-io/conan-center-index/issues/new).
 
-- Explain the Conan version, Operating System, compiler and any other tool that could be related to the issue.
-- Explain, as detailed as possible, how to reproduce the issue. Use git repository to contain code/recipes to reproduce issues, or a snippet.
-- Include the expected behavior as well as what actually happened.
-- Provide output captures (as text).
-- Feel free to attach a screenshot or video illustrating the issue if you think it will be helpful.
+Please ensure that the following information is part of the report:
+- Conan version, operating system and version (output of `conan version`)
+- The command you are trying to run, e.g. `conan install --require=boost/1.85.0`
+- Any additional files required to reproduce your issue, where relevant:
+   - Conan profile (you can attach the output of `conan profile show`, with the relevant profile flags)
+   - A `conanfile.py` if you are using it to specify dependencies and options
+- The outcome you expected
+- The outcome you got instead (please include the full output log)
 
-For any suggestion, feature request or question open an issue indicating the following:
+## Pull requests
 
-- Questions and support requests are always welcome.
-- Use the [question] or [suggestion] tags in the title (provided by github issues templates).
-- Try to explain the motivation, what are you trying to do, what is the pain it tries to solve.
-- What do you expect from CCI.
+We accept pull requests for bugfixes, new features in existing recipes, publish new versions for existing recipes, and to publish new recipes. 
 
-We use the following tags to control the status of the issues and pull requests, you can learn more in [Labels](docs/labels.md) document
-which details the important one and their roles.
+Please ensure pull requests **clear, single primary purpose**, and that the changes in the PR are the minimal required to achieve that purpose. This makes them easier to review and ensures that one set of changes don't delay the merging of the others. With that in mind, please also avoid unrelated changes such as reformatting or refactoring code - unless it is required for the purpose of the PR. Correcting typos is welcome and appreciated.
+
+Please keep the following in mind:
+
+- For a bugfix PR, we will only consider PRs for confirmed bugs - anybody in
+
+
+### Contributor License Agreement
+ [contributor licenses agreement](https://cla-assistant.io/conan-io/conan-center-index).
+
