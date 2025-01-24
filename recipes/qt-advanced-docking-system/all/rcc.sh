@@ -1,0 +1,3 @@
+#!/bin/bash
+
+DYLD_LIBRARY_PATH=$LD_LIBRARY_PATH "$RCC" "$@"
