@@ -90,10 +90,8 @@ class NCursesConan(ConanFile):
                 self.requires("naive-tsearch/0.1.1")
 
     def validate(self):
-        if cross_building(self) and ("arm" in str(self.settings.arch) or "arm" in str(self._settings_build.arch)):
-            # FIXME: Cannot build ncurses from x86_64 to armv8 (Apple M1).  Cross building from Linux/x86_64 to Mingw/x86_64 works flawless.
-            # FIXME: Need access to environment of build profile to set build compiler (BUILD_CC/CC_FOR_BUILD)
-            raise ConanInvalidConfiguration("Cross building to/from arm is (currently) not supported")
+        if cross_building(self) and self.settings.os == "Macos":
+            raise ConanInvalidConfiguration("Cross building to/from Macos is not supported")
         if self.options.shared and is_msvc_static_runtime(self):
             raise ConanInvalidConfiguration("Cannot build shared libraries with static (MT) runtime")
         if self.settings.os == "Windows":
@@ -137,6 +135,7 @@ class NCursesConan(ConanFile):
             "--without-profile",
             "--with-sp-funcs",
             "--disable-rpath",
+            "--disable-stripping", # only applies to executables (with_progrs), has issues when crossbuilding
             "--disable-pc-files",
             "--datarootdir=${prefix}/res",
         ]
