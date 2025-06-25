@@ -35,7 +35,6 @@ class Libxml2Conan(ConanFile):
         "readline": [True, False],
         "regexps": [True, False],
         "sax1": [True, False],
-        "tests": [True, False],
         "threads": [True, False],
         "tls": [True, False],
         "valid": [True, False],
@@ -63,7 +62,6 @@ class Libxml2Conan(ConanFile):
         "readline": False,
         "regexps": True,
         "sax1": True,
-        "tests": True,
         "threads": True,
         "tls": False,
         "valid": True,
@@ -114,13 +112,15 @@ class Libxml2Conan(ConanFile):
         tc.cache_variables["LIBXML2_WITH_READLINE"] = self.options.readline
         tc.cache_variables["LIBXML2_WITH_REGEXPS"] = self.options.regexps
         tc.cache_variables["LIBXML2_WITH_SAX1"] = self.options.sax1
-        tc.cache_variables["LIBXML2_WITH_TESTS"] = self.options.tests
         tc.cache_variables["LIBXML2_WITH_THREADS"] = self.options.threads
         tc.cache_variables["LIBXML2_WITH_TLS"] = self.options.tls
         tc.cache_variables["LIBXML2_WITH_VALID"] = self.options.valid
         tc.cache_variables["LIBXML2_WITH_XINCLUDE"] = self.options.xinclude
         tc.cache_variables["LIBXML2_WITH_XPATH"] = self.options.xpath
-        tc.cache_variables["PKG_CONFIG_EXECUTABLE"] = "PKG_CONFIG_EXECUTABLE-NOTFOUND" 
+
+        # inhibit any CMake logic that requires pkg-config
+        tc.cache_variables["PKG_CONFIG_EXECUTABLE"] = "PKG_CONFIG_EXECUTABLE-NOTFOUND"
+        tc.cache_variables["LIBXML2_WITH_TESTS"] = False
         tc.generate()
 
         cmake_deps = CMakeDeps(self)
@@ -136,6 +136,7 @@ class Libxml2Conan(ConanFile):
         cmake.install()
         rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
+        rmdir(self, os.path.join(self.package_folder, "share")) # contains manpages and docs - if needed, please open an issue
 
     def package_info(self):
         self.cpp_info.libs = ["xml2"]
@@ -147,7 +148,7 @@ class Libxml2Conan(ConanFile):
 
         self.cpp_info.names["cmake_file_name"] = "libxml2"
         self.cpp_info.set_property("cmake_target_name", "LibXml2::LibXml2")
-        self.cpp_info.set_property("cmake_additional_variables_prefixes", ["LIBXML2_"])
+        self.cpp_info.set_property("cmake_additional_variables_prefixes", ["LIBXML2"])
 
         is_unix = self.settings.os in ["Linux", "FreeBSD", "Macos"] or is_apple_os(self)
 
