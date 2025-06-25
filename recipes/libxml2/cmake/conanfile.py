@@ -33,7 +33,7 @@ class Libxml2Conan(ConanFile):
         "programs": True,
         "zlib": True,
     }
-
+    languages = "C"
     implements = ["auto_shared_fpic"]
 
     def configure(self):
