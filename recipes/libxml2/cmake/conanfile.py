@@ -18,56 +18,20 @@ class Libxml2Conan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
-        "catalog": [True, False],
-        "debug": [True, False],
-        "html": [True, False],
-        "http": [True, False],
         "iconv": [True, False],
         "icu": [True, False],
-        "iso8859x": [True, False],
-        "legacy": [True, False],
         "lzma": [True, False],
-        "modules": [True, False],
-        "output": [True, False],
-        "pattern": [True, False],
         "programs": [True, False],
-        "push": [True, False],
-        "python": [True, False],
-        "readline": [True, False],
-        "regexps": [True, False],
-        "sax1": [True, False],
-        "threads": [True, False],
-        "tls": [True, False],
-        "valid": [True, False],
-        "xinclude": [True, False],
-        "xpath": [True, False],
+        "zlib": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
-        "catalog": True,
-        "debug": True,
-        "html": True,
-        "http": False,
         "iconv": True,
         "icu": False,
-        "iso8859x": True,
-        "legacy": False,
         "lzma": False,
-        "modules": True,
-        "output": True,
-        "pattern": True,
         "programs": True,
-        "push": True,
-        "python": False,
-        "readline": False,
-        "regexps": True,
-        "sax1": True,
-        "threads": True,
-        "tls": False,
-        "valid": True,
-        "xinclude": True,
-        "xpath": True,
+        "zlib": True,
     }
 
     implements = ["auto_shared_fpic"]
@@ -89,35 +53,44 @@ class Libxml2Conan(ConanFile):
             self.requires("xz_utils/5.4.5")
         if self.options.icu:
             self.requires("icu/73.2")
-        if self.options.python:
-            pass # Python is not implemented for this recipe yet
+        if self.options.zlib:
+            self.requires("zlib/[>=1.3.1 <2]")
 
     def generate(self):
         tc = CMakeToolchain(self)
         tc.cache_variables["BUILD_SHARED_LIBS"] = self.options.shared
-        tc.cache_variables["LIBXML2_WITH_CATALOG"] = self.options.catalog
-        tc.cache_variables["LIBXML2_WITH_DEBUG"] = self.options.debug
-        tc.cache_variables["LIBXML2_WITH_HTML"] = self.options.html
-        tc.cache_variables["LIBXML2_WITH_HTTP"] = self.options.http
+        tc.cache_variables["LIBXML2_WITH_CATALOG"] = True
+        tc.cache_variables["LIBXML2_WITH_DEBUG"] = True
+        tc.cache_variables["LIBXML2_WITH_HTML"] = True
+        tc.cache_variables["LIBXML2_WITH_HTTP"] = False
         tc.cache_variables["LIBXML2_WITH_ICONV"] = self.options.iconv
         tc.cache_variables["LIBXML2_WITH_ICU"] = self.options.icu
-        tc.cache_variables["LIBXML2_WITH_ISO8859X"] = self.options.iso8859x
-        tc.cache_variables["LIBXML2_WITH_LEGACY"] = self.options.legacy
+        tc.cache_variables["LIBXML2_WITH_ISO8859X"] = True
+        tc.cache_variables["LIBXML2_WITH_LEGACY"] = False
         tc.cache_variables["LIBXML2_WITH_LZMA"] = self.options.lzma
-        tc.cache_variables["LIBXML2_WITH_MODULES"] = self.options.modules
-        tc.cache_variables["LIBXML2_WITH_OUTPUT"] = self.options.output
-        tc.cache_variables["LIBXML2_WITH_PATTERN"] = self.options.pattern
+        tc.cache_variables["LIBXML2_WITH_MODULES"] = True
+        tc.cache_variables["LIBXML2_WITH_OUTPUT"] = True
+        tc.cache_variables["LIBXML2_WITH_PATTERN"] = True
         tc.cache_variables["LIBXML2_WITH_PROGRAMS"] = self.options.programs
-        tc.cache_variables["LIBXML2_WITH_PUSH"] = self.options.push
-        tc.cache_variables["LIBXML2_WITH_PYTHON"] = self.options.python
-        tc.cache_variables["LIBXML2_WITH_READLINE"] = self.options.readline
-        tc.cache_variables["LIBXML2_WITH_REGEXPS"] = self.options.regexps
-        tc.cache_variables["LIBXML2_WITH_SAX1"] = self.options.sax1
-        tc.cache_variables["LIBXML2_WITH_THREADS"] = self.options.threads
-        tc.cache_variables["LIBXML2_WITH_TLS"] = self.options.tls
-        tc.cache_variables["LIBXML2_WITH_VALID"] = self.options.valid
-        tc.cache_variables["LIBXML2_WITH_XINCLUDE"] = self.options.xinclude
-        tc.cache_variables["LIBXML2_WITH_XPATH"] = self.options.xpath
+        tc.cache_variables["LIBXML2_WITH_PUSH"] = True
+        tc.cache_variables["LIBXML2_WITH_PYTHON"] = False
+        tc.cache_variables["LIBXML2_WITH_READLINE"] =False
+        tc.cache_variables["LIBXML2_WITH_REGEXPS"] = True
+        tc.cache_variables["LIBXML2_WITH_SAX1"] = True
+        tc.cache_variables["LIBXML2_WITH_THREADS"] = True
+        tc.cache_variables["LIBXML2_WITH_TLS"] = False
+        tc.cache_variables["LIBXML2_WITH_VALID"] = True
+        tc.cache_variables["LIBXML2_WITH_XINCLUDE"] = True
+        tc.cache_variables["LIBXML2_WITH_XPATH"] = True
+        tc.cache_variables["LIBXML2_WITH_ZLIB"] = self.options.zlib
+        tc.cache_variables["LIBXML2_WITH_C14N"] = True
+        tc.cache_variables["LIBXML2_WITH_HISTORY"] = False
+        tc.cache_variables["LIBXML2_WITH_SCHEMAS"] = True
+        tc.cache_variables["LIBXML2_WITH_SCHEMATRON"] = True
+        tc.cache_variables["LIBXML2_WITH_THREAD_ALLOC"] = False
+        tc.cache_variables["LIBXML2_WITH_WRITER"] = True
+        tc.cache_variables["LIBXML2_WITH_XPTR"] = True
+        tc.cache_variables["LIBXML2_WITH_RELAXNG"] = True
 
         # inhibit any CMake logic that requires pkg-config
         tc.cache_variables["PKG_CONFIG_EXECUTABLE"] = "PKG_CONFIG_EXECUTABLE-NOTFOUND"
@@ -149,7 +122,6 @@ class Libxml2Conan(ConanFile):
         self.cpp_info.libs = [f"xml2{postfix}"]
 
         self.cpp_info.includedirs = [os.path.join("include", "libxml2")]
-        
         if not self.options.shared:
             self.cpp_info.defines.append("LIBXML_STATIC")
 
@@ -161,10 +133,9 @@ class Libxml2Conan(ConanFile):
 
         if is_unix:
             self.cpp_info.system_libs.append("m")
-            if self.options.modules:
-                self.cpp_info.system_libs.append("dl")
+            self.cpp_info.system_libs.append("dl")
 
-        if self.settings.os in ("Linux", "FreeBSD") and self.options.threads:
+        if self.settings.os in ("Linux", "FreeBSD"):
             self.cpp_info.system_libs.append("pthread")
 
         if self.options.icu:
