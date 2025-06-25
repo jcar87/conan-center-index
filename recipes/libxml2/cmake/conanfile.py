@@ -74,8 +74,8 @@ class Libxml2Conan(ConanFile):
     implements = ["auto_shared_fpic"]
 
     def configure(self):
-        del self.settings.compiler.libcxx
-        del self.settings.compiler.cppstd
+        self.settings.rm_safe("compiler.libcxx")
+        self.settings.rm_safe("compiler.cppstd")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -120,6 +120,7 @@ class Libxml2Conan(ConanFile):
         tc.cache_variables["LIBXML2_WITH_VALID"] = self.options.valid
         tc.cache_variables["LIBXML2_WITH_XINCLUDE"] = self.options.xinclude
         tc.cache_variables["LIBXML2_WITH_XPATH"] = self.options.xpath
+        tc.cache_variables["PKG_CONFIG_EXECUTABLE"] = "PKG_CONFIG_EXECUTABLE-NOTFOUND" 
         tc.generate()
 
         cmake_deps = CMakeDeps(self)
@@ -133,12 +134,16 @@ class Libxml2Conan(ConanFile):
     def package(self):
         cmake = CMake(self)
         cmake.install()
-        # rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
-        # rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
+        rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
+        rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
 
     def package_info(self):
         self.cpp_info.libs = ["xml2"]
+        if self.settings.os == "Windows" and not self.options.shared:
+            self.cpp_info.libs = ["xml2s"]
         self.cpp_info.includedirs = [os.path.join("include", "libxml2")]
+        if not self.options.shared:
+            self.cpp_info.defines.append("LIBXML_STATIC")
 
         self.cpp_info.names["cmake_file_name"] = "libxml2"
         self.cpp_info.set_property("cmake_target_name", "LibXml2::LibXml2")
@@ -160,6 +165,3 @@ class Libxml2Conan(ConanFile):
             self.cpp_info.system_libs.append("Bcrypt")
             if self.options.http:
                 self.cpp_info.system_libs.append("ws2_32")
-
-        
-
