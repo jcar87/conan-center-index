@@ -62,7 +62,7 @@ class Libxml2Conan(ConanFile):
         tc.cache_variables["LIBXML2_WITH_CATALOG"] = True
         tc.cache_variables["LIBXML2_WITH_DEBUG"] = True
         tc.cache_variables["LIBXML2_WITH_HTML"] = True
-        tc.cache_variables["LIBXML2_WITH_HTTP"] = False
+        tc.cache_variables["LIBXML2_WITH_HTTP"] = True
         tc.cache_variables["LIBXML2_WITH_ICONV"] = self.options.iconv
         tc.cache_variables["LIBXML2_WITH_ICU"] = self.options.icu
         tc.cache_variables["LIBXML2_WITH_ISO8859X"] = True
@@ -142,5 +142,4 @@ class Libxml2Conan(ConanFile):
             self.cpp_info.requires.extend(["icu::icu-uc", "icu::icu-data", "icu::icu-i18n"])
         if self.settings.os == "Windows":
             self.cpp_info.system_libs.append("Bcrypt")
-            if self.options.http:
-                self.cpp_info.system_libs.append("ws2_32")
+            self.cpp_info.system_libs.append("ws2_32") # http
