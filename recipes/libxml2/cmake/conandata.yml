@@ -1,0 +1,4 @@
+sources:
+  "2.14.4":
+    url: "https://download.gnome.org/sources/libxml2/2.14/libxml2-2.14.4.tar.xz"
+    sha256: "24175ec30a97cfa86bdf9befb7ccf4613f8f4b2713c5103e0dd0bc9c711a2773"
