@@ -4,6 +4,7 @@ from conan import ConanFile
 from conan.tools.apple import is_apple_os
 from conan.tools.cmake import CMake, CMakeDeps, cmake_layout, CMakeToolchain
 from conan.tools.files import get, rmdir
+from conan.tools.microsoft import is_msvc
 
 class Libxml2Conan(ConanFile):
     name = "libxml2"
@@ -139,10 +140,16 @@ class Libxml2Conan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "share")) # contains manpages and docs - if needed, please open an issue
 
     def package_info(self):
-        self.cpp_info.libs = ["xml2"]
-        if self.settings.os == "Windows" and not self.options.shared:
-            self.cpp_info.libs = ["xml2s"]
+        postfix = ""
+        if is_msvc(self):
+            static_postfix = "s" if not self.options.shared else ""
+            debug_postfix = "d" if self.settings.build_type == "Debug" else ""
+            postfix = f"{static_postfix}{debug_postfix}"
+            
+        self.cpp_info.libs = [f"xml2{postfix}"]
+
         self.cpp_info.includedirs = [os.path.join("include", "libxml2")]
+        
         if not self.options.shared:
             self.cpp_info.defines.append("LIBXML_STATIC")
 
