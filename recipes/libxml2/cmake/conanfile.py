@@ -3,7 +3,7 @@ import os
 from conan import ConanFile
 from conan.tools.apple import is_apple_os
 from conan.tools.cmake import CMake, CMakeDeps, cmake_layout, CMakeToolchain
-from conan.tools.files import get, rmdir
+from conan.tools.files import copy, get, rmdir
 from conan.tools.microsoft import is_msvc
 
 class Libxml2Conan(ConanFile):
@@ -106,6 +106,9 @@ class Libxml2Conan(ConanFile):
     def package(self):
         cmake = CMake(self)
         cmake.install()
+
+        copy(self, "Copyright", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+
         rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
         rmdir(self, os.path.join(self.package_folder, "share")) # contains manpages and docs - if needed, please open an issue
@@ -120,7 +123,10 @@ class Libxml2Conan(ConanFile):
             
         self.cpp_info.libs = [f"{prefix}xml2{postfix}"]
 
-        self.cpp_info.includedirs = [os.path.join("include", "libxml2")]
+        # technically there should be a single include directory, but this
+        # keeps compatibility with the .pc files generated upstream (and relied on by ffmpeg)
+        self.cpp_info.includedirs.append(os.path.join("include", "libxml2"))
+
         if not self.options.shared:
             self.cpp_info.defines.append("LIBXML_STATIC")
 
