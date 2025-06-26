@@ -36,10 +36,6 @@ class Libxml2Conan(ConanFile):
     languages = "C"
     implements = ["auto_shared_fpic"]
 
-    def configure(self):
-        self.settings.rm_safe("compiler.libcxx")
-        self.settings.rm_safe("compiler.cppstd")
-
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
@@ -55,6 +51,8 @@ class Libxml2Conan(ConanFile):
             self.requires("icu/73.2")
         if self.options.zlib:
             self.requires("zlib/[>=1.3.1 <2]")
+
+        self.tool_requires("cmake/[>=3.18 <4]")
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -114,12 +112,13 @@ class Libxml2Conan(ConanFile):
 
     def package_info(self):
         postfix = ""
+        prefix = "lib" if self.settings.os == "Windows" else ""
         if is_msvc(self):
             static_postfix = "s" if not self.options.shared else ""
             debug_postfix = "d" if self.settings.build_type == "Debug" else ""
             postfix = f"{static_postfix}{debug_postfix}"
             
-        self.cpp_info.libs = [f"xml2{postfix}"]
+        self.cpp_info.libs = [f"{prefix}xml2{postfix}"]
 
         self.cpp_info.includedirs = [os.path.join("include", "libxml2")]
         if not self.options.shared:
@@ -128,6 +127,7 @@ class Libxml2Conan(ConanFile):
         self.cpp_info.names["cmake_file_name"] = "libxml2"
         self.cpp_info.set_property("cmake_target_name", "LibXml2::LibXml2")
         self.cpp_info.set_property("cmake_additional_variables_prefixes", ["LIBXML2"])
+        self.cpp_info.set_property("pkg_config_name", "libxml-2.0")
 
         is_unix = self.settings.os in ["Linux", "FreeBSD", "Macos"] or is_apple_os(self)
 
