@@ -10,9 +10,9 @@ from conan.tools.files import apply_conandata_patches, copy, export_conandata_pa
     rename
 from conan.tools.gnu import Autotools, AutotoolsToolchain
 from conan.tools.layout import basic_layout
-from conan.tools.microsoft import is_msvc, is_msvc_static_runtime, msvc_runtime_flag
+from conan.tools.microsoft import is_msvc, is_msvc_static_runtime, msvc_runtime_flag, MSBuildToolchain
 from conan.tools.scm import Version
-
+import textwrap
 required_conan_version = ">=1.57.0"
 
 
@@ -184,6 +184,10 @@ class LibVPXConan(ConanFile):
             # gen_msvs_vcxproj.sh doesn't like custom flags
             env = Environment()
             env.define("CC", "")
+
+            msbuild_toolchain = MSBuildToolchain(self)
+            msbuild_toolchain.properties["VCToolsVersion"] = "14.44.35207"
+            msbuild_toolchain.generate()
         else:
             env = tc.environment()
         tc.generate(env)
@@ -203,6 +207,14 @@ class LibVPXConan(ConanFile):
                 )
             else:
                 self.output.info("Enabling LTO")
+            conantoolchain_props = os.path.join(self.generators_folder, MSBuildToolchain.filename)
+            replace_in_file(self, os.path.join(self.source_folder, "build", "make", "gen_msvs_vcxproj.sh"),
+                            'Project="\\$(VCTargetsPath)\\\\Microsoft.Cpp.props"', 
+                            textwrap.dedent(f"""\
+                              Project="{conantoolchain_props}"
+                            tag Import \\
+                              Project="\\$(VCTargetsPath)\\\\Microsoft.Cpp.props"
+                            """ ))
 
         # The compile script wants to use CC for some of the platforms (Linux, etc),
         # but incorrectly assumes gcc is the compiler for those platforms.
