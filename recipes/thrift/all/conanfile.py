@@ -91,6 +91,8 @@ class ThriftConan(ConanFile):
         tc.variables["BUILD_COMPILER"] = True
         tc.variables["BUILD_LIBRARIES"] = True
         tc.variables["BUILD_TUTORIALS"] = False
+        tc.cache_variables["WITH_JAVASCRIPT"] = False
+        tc.cache_variables["WITH_NODEJS"] = False
         if is_msvc(self):
             tc.variables["WITH_MT"] = is_msvc_static_runtime(self)
         # This policy doesn't matter for us, but avoids a warning
