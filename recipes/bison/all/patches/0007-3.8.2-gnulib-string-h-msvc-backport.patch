@@ -1,0 +1,78 @@
+diff --git a/lib/string.in.h b/lib/string.in.h
+index 8977153..6615490 100644
+--- a/lib/string.in.h
++++ b/lib/string.in.h
+@@ -83,13 +83,29 @@
+ 
+ /* The definition of _GL_WARN_ON_USE is copied here.  */
+ 
+-/* Declare 'free' if needed for _GL_ATTRIBUTE_DEALLOC_FREE.  */
+-#if (@REPLACE_FREE@ && !defined free \
+-     && !(defined __cplusplus && defined GNULIB_NAMESPACE))
++/* Make _GL_ATTRIBUTE_DEALLOC_FREE work, even though <stdlib.h> may not have
++   been included yet.  */
++
++# if (@REPLACE_FREE@ && !defined free \
++      && !(defined __cplusplus && defined GNULIB_NAMESPACE))
++/* We can't do '#define free rpl_free' here.  */
++_GL_EXTERN_C void rpl_free (void *);
++#  undef _GL_ATTRIBUTE_DEALLOC_FREE
++#  define _GL_ATTRIBUTE_DEALLOC_FREE _GL_ATTRIBUTE_DEALLOC (rpl_free, 1)
++# else
++#  if defined _MSC_VER
++_GL_EXTERN_C void __cdecl free (void *);
++#  else
+ _GL_EXTERN_C void free (void *);
+-# define free rpl_free
+-#endif
++#  endif
++# endif
++#else
++# if defined _MSC_VER
++_GL_EXTERN_C void __cdecl free (void *);
++# else
+ _GL_EXTERN_C void free (void *);
++# endif
++
+ 
+ /* Clear a block of memory.  The compiler will not delete a call to
+    this function, even if the block is dead after the call.  */
+diff --git a/lib/wchar.in.h b/lib/wchar.in.h
+index acb9d4e..18d5872 100644
+--- a/lib/wchar.in.h
++++ b/lib/wchar.in.h
+@@ -146,13 +146,29 @@ typedef int rpl_mbstate_t;
+ # endif
+ #endif
+ 
+-/* Declare 'free' if needed for _GL_ATTRIBUTE_DEALLOC_FREE.  */
+-#if (@REPLACE_FREE@ && !defined free \
+-     && !(defined __cplusplus && defined GNULIB_NAMESPACE))
++/* Make _GL_ATTRIBUTE_DEALLOC_FREE work, even though <stdlib.h> may not have
++   been included yet.  */
++
++# if (@REPLACE_FREE@ && !defined free \
++      && !(defined __cplusplus && defined GNULIB_NAMESPACE))
++/* We can't do '#define free rpl_free' here.  */
++_GL_EXTERN_C void rpl_free (void *);
++#  undef _GL_ATTRIBUTE_DEALLOC_FREE
++#  define _GL_ATTRIBUTE_DEALLOC_FREE _GL_ATTRIBUTE_DEALLOC (rpl_free, 1)
++# else
++#  if defined _MSC_VER
++_GL_EXTERN_C void __cdecl free (void *);
++#  else
+ _GL_EXTERN_C void free (void *);
+-# define free rpl_free
+-#endif
++#  endif
++# endif
++#else
++# if defined _MSC_VER
++_GL_EXTERN_C void __cdecl free (void *);
++# else
+ _GL_EXTERN_C void free (void *);
++# endif
++
+ 
+ /* Convert a single-byte character to a wide character.  */
+ #if @GNULIB_BTOWC@

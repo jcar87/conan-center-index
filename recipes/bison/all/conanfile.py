@@ -36,13 +36,6 @@ class BisonConan(ConanFile):
     def requirements(self):
         self.requires("m4/1.4.19")
 
-    def validate(self):
-        if is_msvc(self) and self.version == "3.8.2":
-            raise ConanInvalidConfiguration(
-                f"{self.ref} is not yet ready for Visual Studio, use previous version "
-                "or open a pull request on https://github.com/conan-io/conan-center-index/pulls"
-            )
-
     def build_requirements(self):
         if self.settings_build.os == "Windows":
             self.win_bash = True
@@ -75,6 +68,7 @@ class BisonConan(ConanFile):
                 "gl_cv_func_printf_directive_n=no",
                 "gl_cv_func_snprintf_directive_n=no",
                 "gl_cv_func_snprintf_directive_n=no",
+                #"ac_cv_have_decl_mbsinit=yes", # for cross-building on Windows
             ])
             tc.extra_cflags.append("-FS")
         env = tc.environment()
@@ -123,7 +117,7 @@ class BisonConan(ConanFile):
         self._patch_sources()
         autotools = Autotools(self)
         autotools.configure()
-        autotools.install()
+        autotools.make()
 
     def package(self):
         copy(self, "COPYING", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
