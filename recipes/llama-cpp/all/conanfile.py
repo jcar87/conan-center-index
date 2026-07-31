@@ -92,7 +92,19 @@ class LlamaCppConan(ConanFile):
         tc = CMakeToolchain(self)
         tc.variables["BUILD_SHARED_LIBS"] = bool(self.options.shared)
         tc.variables["LLAMA_STANDALONE"] = False
+        tc.variables["LLAMA_BUILD_COMMON"] = True
         tc.variables["LLAMA_BUILD_TESTS"] = False
+        # llama-cli lives under tools/, and (as of b10194) tools/cli is only added when
+        # LLAMA_BUILD_SERVER is also on, since the CLI now reuses the server implementation.
+        tc.variables["LLAMA_BUILD_TOOLS"] = True
+        tc.variables["LLAMA_BUILD_SERVER"] = True
+        # LLAMA_BUILD_APP is a new "unified binary" target, not part of what this recipe
+        # has built historically, so keep it off.
+        tc.variables["LLAMA_BUILD_APP"] = False
+        # Avoid the UI's default behavior of fetching prebuilt web assets from a
+        # Hugging Face bucket at build time.
+        tc.variables["LLAMA_BUILD_UI"] = False
+        tc.variables["LLAMA_USE_PREBUILT_UI"] = False
         tc.variables["LLAMA_BUILD_EXAMPLES"] = self.options.get_safe("with_examples")
         tc.variables["LLAMA_CURL"] = self.options.get_safe("with_curl")
         if cross_building(self):
@@ -155,9 +167,11 @@ class LlamaCppConan(ConanFile):
         self.cpp_info.components["llama"].resdirs = ["res"]
         self.cpp_info.components["llama"].requires.append("ggml")
 
+        self.cpp_info.components["common-base"].libs = ["llama-common-base"]
+
         self.cpp_info.components["common"].includedirs = [os.path.join("include", "common")]
-        self.cpp_info.components["common"].libs = ["common"]
-        self.cpp_info.components["common"].requires = ["llama"]
+        self.cpp_info.components["common"].libs = ["llama-common"]
+        self.cpp_info.components["common"].requires = ["llama", "common-base"]
 
         if self.options.with_curl:
             self.cpp_info.components["common"].requires.append("libcurl::libcurl")
